@@ -1,0 +1,11 @@
+# MCP 프로토콜 지원
+mcp
+
+# FastAPI 웹 프레임워크와 관련 패키지
+fastapi
+uvicorn[standard]
+pydantic
+python-multipart
+
+# 성능 최적화 (Linux/macOS만)
+uvloop; sys_platform != "win32"
