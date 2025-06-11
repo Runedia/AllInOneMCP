@@ -7,5 +7,8 @@ uvicorn[standard]
 pydantic
 python-multipart
 
+# Git 도구 지원
+GitPython
+
 # 성능 최적화 (Linux/macOS만)
 uvloop; sys_platform != "win32"

@@ -4,6 +4,8 @@ MCP 서버 설정과 도구 정의
 
 import sys
 import traceback
+import json
+import os
 from typing import List, Dict, Any, Sequence
 
 try:
@@ -58,383 +60,38 @@ def create_mcp_server():
 
 
 def get_tool_definitions() -> List[types.Tool]:
-    """모든 도구 정의 반환"""
-    return [
-        # 기존 도구들
-        types.Tool(
-            name="read_file",
-            description="Read the contents of a file with automatic encoding detection",
-            inputSchema={
-                "type": "object",
-                "properties": {
-                    "path": {"type": "string", "description": "File path to read"}
-                },
-                "required": ["path"],
-                "additionalProperties": False
-            }
-        ),
-        types.Tool(
-            name="write_file",
-            description="Write content to a file",
-            inputSchema={
-                "type": "object",
-                "properties": {
-                    "path": {"type": "string", "description": "File path to write"},
-                    "content": {"type": "string", "description": "Content to write"}
-                },
-                "required": ["path", "content"],
-                "additionalProperties": False
-            }
-        ),
-        types.Tool(
-            name="list_directory",
-            description="List directory contents",
-            inputSchema={
-                "type": "object",
-                "properties": {
-                    "path": {"type": "string", "description": "Directory path to list"}
-                },
-                "required": ["path"],
-                "additionalProperties": False
-            }
-        ),
-        types.Tool(
-            name="create_directory",
-            description="Create a directory",
-            inputSchema={
-                "type": "object",
-                "properties": {
-                    "path": {"type": "string", "description": "Directory path to create"}
-                },
-                "required": ["path"],
-                "additionalProperties": False
-            }
-        ),
-        types.Tool(
-            name="list_allowed_directories",
-            description="List all allowed directories",
-            inputSchema={
-                "type": "object",
-                "properties": {},
-                "required": [],
-                "additionalProperties": False
-            }
-        ),
-        # 토큰 효율적인 도구들
-        types.Tool(
-            name="file_exists",
-            description="Check if a file or directory exists (very token efficient - returns Yes/No)",
-            inputSchema={
-                "type": "object",
-                "properties": {
-                    "path": {"type": "string", "description": "Path to check"}
-                },
-                "required": ["path"],
-                "additionalProperties": False
-            }
-        ),
-        types.Tool(
-            name="count_files",
-            description="Count files in directory by extension (token efficient summary)",
-            inputSchema={
-                "type": "object",
-                "properties": {
-                    "path": {"type": "string", "description": "Directory path"},
-                    "extension": {"type": "string", "description": "File extension (optional)"}
-                },
-                "required": ["path"],
-                "additionalProperties": False
-            }
-        ),
-        types.Tool(
-            name="get_directory_size",
-            description="Get total size of directory (compact size summary)",
-            inputSchema={
-                "type": "object",
-                "properties": {
-                    "path": {"type": "string", "description": "Directory path"}
-                },
-                "required": ["path"],
-                "additionalProperties": False
-            }
-        ),
-        types.Tool(
-            name="get_recent_files",
-            description="Get most recently modified files (small list)",
-            inputSchema={
-                "type": "object",
-                "properties": {
-                    "path": {"type": "string", "description": "Directory path"},
-                    "limit": {"type": "integer", "description": "Max files to return (default: 5)", "default": 5}
-                },
-                "required": ["path"],
-                "additionalProperties": False
-            }
-        ),
-        types.Tool(
-            name="analyze_project",
-            description="Analyze project structure and file types (compact overview)",
-            inputSchema={
-                "type": "object",
-                "properties": {
-                    "path": {"type": "string", "description": "Project directory path"}
-                },
-                "required": ["path"],
-                "additionalProperties": False
-            }
-        ),
-        types.Tool(
-            name="git_status_summary",
-            description="Get brief git status summary (very compact)",
-            inputSchema={
-                "type": "object",
-                "properties": {
-                    "path": {"type": "string", "description": "Repository path"}
-                },
-                "required": ["path"],
-                "additionalProperties": False
-            }
-        ),
-        # OS 명령어 기반 도구들
-        types.Tool(
-            name="copy_file",
-            description="Copy a file (very token efficient - uses OS commands)",
-            inputSchema={
-                "type": "object",
-                "properties": {
-                    "source": {"type": "string", "description": "Source file path"},
-                    "destination": {"type": "string", "description": "Destination file path"}
-                },
-                "required": ["source", "destination"],
-                "additionalProperties": False
-            }
-        ),
-        types.Tool(
-            name="move_file",
-            description="Move or rename a file (token efficient)",
-            inputSchema={
-                "type": "object",
-                "properties": {
-                    "source": {"type": "string", "description": "Source file path"},
-                    "destination": {"type": "string", "description": "Destination file path"}
-                },
-                "required": ["source", "destination"],
-                "additionalProperties": False
-            }
-        ),
-        types.Tool(
-            name="delete_file",
-            description="Delete a file (token efficient - simple confirmation)",
-            inputSchema={
-                "type": "object",
-                "properties": {
-                    "path": {"type": "string", "description": "File path to delete"},
-                    "force": {"type": "boolean", "description": "Skip confirmation", "default": False}
-                },
-                "required": ["path"],
-                "additionalProperties": False
-            }
-        ),
-        types.Tool(
-            name="backup_file",
-            description="Create a backup copy with timestamp (very token efficient)",
-            inputSchema={
-                "type": "object",
-                "properties": {
-                    "path": {"type": "string", "description": "File path to backup"}
-                },
-                "required": ["path"],
-                "additionalProperties": False
-            }
-        ),
-        types.Tool(
-            name="file_info",
-            description="Get file info without reading contents (very token efficient)",
-            inputSchema={
-                "type": "object",
-                "properties": {
-                    "path": {"type": "string", "description": "File path to check"}
-                },
-                "required": ["path"],
-                "additionalProperties": False
-            }
-        ),
-        types.Tool(
-            name="execute_command",
-            description="Execute system command (token efficient for file operations)",
-            inputSchema={
-                "type": "object",
-                "properties": {
-                    "command": {"type": "string", "description": "Command to execute"},
-                    "timeout": {"type": "integer", "description": "Timeout in seconds", "default": 30}
-                },
-                "required": ["command"],
-                "additionalProperties": False
-            }
-        ),
-        # 파일 수정 도구들
-        types.Tool(
-            name="find_and_replace",
-            description="Find and replace text in file (very token efficient - no full file reading)",
-            inputSchema={
-                "type": "object",
-                "properties": {
-                    "path": {"type": "string", "description": "File path to modify"},
-                    "find": {"type": "string", "description": "Text to find"},
-                    "replace": {"type": "string", "description": "Text to replace with"},
-                    "count": {"type": "integer", "description": "Max replacements (0 = all)", "default": 0}
-                },
-                "required": ["path", "find", "replace"],
-                "additionalProperties": False
-            }
-        ),
-        types.Tool(
-            name="insert_line",
-            description="Insert line at specific position (token efficient)",
-            inputSchema={
-                "type": "object",
-                "properties": {
-                    "path": {"type": "string", "description": "File path to modify"},
-                    "line_number": {"type": "integer", "description": "Line number to insert at (1-based)"},
-                    "content": {"type": "string", "description": "Content to insert"}
-                },
-                "required": ["path", "line_number", "content"],
-                "additionalProperties": False
-            }
-        ),
-        types.Tool(
-            name="append_to_file",
-            description="Append content to end of file (very token efficient)",
-            inputSchema={
-                "type": "object",
-                "properties": {
-                    "path": {"type": "string", "description": "File path to modify"},
-                    "content": {"type": "string", "description": "Content to append"}
-                },
-                "required": ["path", "content"],
-                "additionalProperties": False
-            }
-        ),
-        types.Tool(
-            name="get_file_section",
-            description="Get specific lines from file (token efficient reading)",
-            inputSchema={
-                "type": "object",
-                "properties": {
-                    "path": {"type": "string", "description": "File path to read"},
-                    "start_line": {"type": "integer", "description": "Start line number (1-based)"},
-                    "end_line": {"type": "integer", "description": "End line number (1-based, optional)"},
-                    "context": {"type": "integer", "description": "Extra context lines around", "default": 0}
-                },
-                "required": ["path", "start_line"],
-                "additionalProperties": False
-            }
-        ),
-        # 🆕 고급 편집 도구들
-        types.Tool(
-            name="count_occurrences",
-            description="Count occurrences of text in file",
-            inputSchema={
-                "type": "object",
-                "properties": {
-                    "path": {"type": "string", "description": "File path to search"},
-                    "search_text": {"type": "string", "description": "Text to search for"},
-                    "case_sensitive": {"type": "boolean", "description": "Case sensitive search", "default": True}
-                },
-                "required": ["path", "search_text"],
-                "additionalProperties": False
-            }
-        ),
-        types.Tool(
-            name="replace_line_range",
-            description="Replace a range of lines with new content (memory efficient)",
-            inputSchema={
-                "type": "object",
-                "properties": {
-                    "path": {"type": "string", "description": "File path to modify"},
-                    "start_line": {"type": "integer", "description": "Start line number (1-based)"},
-                    "end_line": {"type": "integer", "description": "End line number (1-based)"},
-                    "content": {"type": "string", "description": "New content to replace with"}
-                },
-                "required": ["path", "start_line", "end_line", "content"],
-                "additionalProperties": False
-            }
-        ),
-        types.Tool(
-            name="delete_lines",
-            description="Delete specific lines from file (memory efficient)",
-            inputSchema={
-                "type": "object",
-                "properties": {
-                    "path": {"type": "string", "description": "File path to modify"},
-                    "start_line": {"type": "integer", "description": "Start line number (1-based)"},
-                    "end_line": {"type": "integer", "description": "End line number (1-based, optional)"}
-                },
-                "required": ["path", "start_line"],
-                "additionalProperties": False
-            }
-        ),
-        types.Tool(
-            name="regex_replace",
-            description="Advanced find/replace using regular expressions",
-            inputSchema={
-                "type": "object",
-                "properties": {
-                    "path": {"type": "string", "description": "File path to modify"},
-                    "pattern": {"type": "string", "description": "Regular expression pattern"},
-                    "replacement": {"type": "string", "description": "Replacement text (can use $1, $2 for groups)"},
-                    "flags": {"type": "string", "description": "Regex flags (i=ignorecase, m=multiline, s=dotall)",
-                              "default": ""},
-                    "count": {"type": "integer", "description": "Max replacements (0 = all)", "default": 0}
-                },
-                "required": ["path", "pattern", "replacement"],
-                "additionalProperties": False
-            }
-        ),
-        types.Tool(
-            name="smart_indent",
-            description="Smart indentation adjustment for code",
-            inputSchema={
-                "type": "object",
-                "properties": {
-                    "path": {"type": "string", "description": "File path to modify"},
-                    "start_line": {"type": "integer", "description": "Start line number (1-based)"},
-                    "end_line": {"type": "integer", "description": "End line number (1-based)"},
-                    "indent_change": {"type": "integer",
-                                      "description": "Indent levels to add (positive) or remove (negative)"},
-                    "use_tabs": {"type": "boolean", "description": "Use tabs instead of spaces", "default": False}
-                },
-                "required": ["path", "start_line", "end_line", "indent_change"],
-                "additionalProperties": False
-            }
-        ),
-        types.Tool(
-            name="patch_apply",
-            description="Apply multiple edit operations in batch (very efficient)",
-            inputSchema={
-                "type": "object",
-                "properties": {
-                    "path": {"type": "string", "description": "File path to modify"},
-                    "operations": {
-                        "type": "array",
-                        "description": "List of operations to apply",
-                        "items": {
-                            "type": "object",
-                            "properties": {
-                                "type": {"type": "string", "enum": ["replace", "insert", "delete"]},
-                                "start": {"type": "integer", "description": "Start line (1-based)"},
-                                "end": {"type": "integer", "description": "End line (1-based, for replace/delete)"},
-                                "content": {"type": "string", "description": "Content for replace/insert operations"}
-                            },
-                            "required": ["type", "start"]
-                        }
-                    }
-                },
-                "required": ["path", "operations"],
-                "additionalProperties": False
-            }
-        )
-    ]
+    """JSON 파일에서 도구 정의를 로드하여 types.Tool 객체로 변환"""
+    try:
+        # 현재 스크립트와 같은 디렉토리의 tools.json 파일 경로
+        current_dir = os.path.dirname(os.path.abspath(__file__))
+        tools_json_path = os.path.join(current_dir, 'tools.json')
+
+        # JSON 파일 읽기
+        with open(tools_json_path, 'r', encoding='utf-8') as f:
+            tools_data = json.load(f)
+
+        # JSON 데이터를 types.Tool 객체로 변환
+        tools = []
+        for tool_data in tools_data:
+            tool = types.Tool(
+                name=tool_data['name'],
+                description=tool_data['description'],
+                inputSchema=tool_data['inputSchema']
+            )
+            tools.append(tool)
+
+        print(f"[DEBUG] Loaded {len(tools)} tools from tools.json", file=sys.stderr)
+        return tools
+
+    except FileNotFoundError:
+        print(f"[ERROR] tools.json file not found at {tools_json_path}", file=sys.stderr)
+        return []
+    except json.JSONDecodeError as e:
+        print(f"[ERROR] Invalid JSON in tools.json: {e}", file=sys.stderr)
+        return []
+    except Exception as e:
+        print(f"[ERROR] Error loading tools from JSON: {e}", file=sys.stderr)
+        return []
 
 
 async def run_mcp_server():

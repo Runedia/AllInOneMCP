@@ -12,7 +12,7 @@ from tools.utils import normalize_path
 
 
 async def handle_replace_line_range(arguments: Dict[str, Any]) -> str:
-    """라인 범위를 새 내용으로 교체 (메모리 효율적)"""
+    """라인 범위를 새 내용으로 교체 (메모리 효율적) - 라인 수 변화 감지 포함"""
     path_str = arguments.get("path", "")
     start_line = arguments.get("start_line", 1)
     end_line = arguments.get("end_line", start_line)
@@ -22,6 +22,14 @@ async def handle_replace_line_range(arguments: Dict[str, Any]) -> str:
     if not path.exists():
         raise FileNotFoundError(f"File not found: {path}")
 
+    # 📊 라인 수 변화 감지를 위한 사전 계산
+    original_content = path.read_text(encoding='utf-8')
+    original_total_lines = len(original_content.splitlines())
+    
+    lines_to_remove = end_line - start_line + 1
+    lines_to_add = new_content.count('\n') + 1 if new_content.strip() else 0
+    line_change = lines_to_add - lines_to_remove
+    
     # 스트리밍 방식으로 처리
     temp_file = tempfile.NamedTemporaryFile(mode='w', encoding='utf-8', delete=False)
 
@@ -57,8 +65,23 @@ async def handle_replace_line_range(arguments: Dict[str, Any]) -> str:
         temp_file.close()
         shutil.move(temp_file.name, path)
 
-        lines_affected = end_line - start_line + 1
-        return f"Replaced lines {start_line}-{end_line} ({lines_affected} lines) with new content"
+        # 📊 라인 수 변화 결과 계산
+        new_total_lines = original_total_lines + line_change
+        
+        # 📋 상세한 변화 정보 메시지 생성
+        base_msg = f"Replaced lines {start_line}-{end_line} ({lines_to_remove} lines) with new content"
+        
+        if line_change == 0:
+            change_msg = "✅ Line numbers unchanged"
+        elif line_change > 0:
+            change_msg = f"📈 Added {line_change} lines - Lines {end_line + 1}+ shifted DOWN by {line_change}"
+        else:
+            shift_up = abs(line_change)
+            change_msg = f"📉 Removed {shift_up} lines - Lines {end_line + 1}+ shifted UP by {shift_up}"
+        
+        total_msg = f"📊 Total lines: {original_total_lines} → {new_total_lines}"
+        
+        return f"{base_msg}\n{change_msg}\n{total_msg}"
 
     except Exception as e:
         if os.path.exists(temp_file.name):
@@ -67,7 +90,7 @@ async def handle_replace_line_range(arguments: Dict[str, Any]) -> str:
 
 
 async def handle_delete_lines(arguments: Dict[str, Any]) -> str:
-    """특정 라인들 삭제 (메모리 효율적)"""
+    """특정 라인들 삭제 (메모리 효율적) - 라인 수 변화 감지 포함"""
     path_str = arguments.get("path", "")
     start_line = arguments.get("start_line", 1)
     end_line = arguments.get("end_line", start_line)
@@ -75,6 +98,13 @@ async def handle_delete_lines(arguments: Dict[str, Any]) -> str:
     path = normalize_path(path_str)
     if not path.exists():
         raise FileNotFoundError(f"File not found: {path}")
+
+    # 📊 라인 수 변화 감지를 위한 사전 계산
+    original_content = path.read_text(encoding='utf-8')
+    original_total_lines = len(original_content.splitlines())
+    
+    lines_to_delete = end_line - start_line + 1
+    line_change = -lines_to_delete  # 항상 음수 (삭제)
 
     temp_file = tempfile.NamedTemporaryFile(mode='w', encoding='utf-8', delete=False)
 
@@ -93,7 +123,20 @@ async def handle_delete_lines(arguments: Dict[str, Any]) -> str:
         temp_file.close()
         shutil.move(temp_file.name, path)
 
-        return f"Deleted lines {start_line}-{end_line} ({deleted_count} lines)"
+        # 📊 라인 수 변화 결과 계산
+        new_total_lines = original_total_lines + line_change
+        
+        # 📋 상세한 변화 정보 메시지 생성
+        base_msg = f"Deleted lines {start_line}-{end_line} ({deleted_count} lines)"
+        
+        if deleted_count > 0:
+            change_msg = f"📉 Removed {deleted_count} lines - Lines {end_line + 1}+ shifted UP by {deleted_count}"
+        else:
+            change_msg = "✅ No lines were deleted"
+        
+        total_msg = f"📊 Total lines: {original_total_lines} → {new_total_lines}"
+        
+        return f"{base_msg}\n{change_msg}\n{total_msg}"
 
     except Exception as e:
         if os.path.exists(temp_file.name):
@@ -191,7 +234,7 @@ async def handle_insert_at_position(arguments: Dict[str, Any]) -> str:
 
 
 async def handle_patch_apply(arguments: Dict[str, Any]) -> str:
-    """여러 편집 작업을 한 번에 적용 (배치 처리)"""
+    """여러 편집 작업을 한 번에 적용 (배치 처리) - 라인 수 변화 감지 포함"""
     path_str = arguments.get("path", "")
     operations = arguments.get("operations", [])  # [{"type": "replace", "start": 1, "end": 2, "content": "new"}]
 
@@ -202,10 +245,14 @@ async def handle_patch_apply(arguments: Dict[str, Any]) -> str:
     if not operations:
         return "No operations provided"
 
+    # 📊 라인 수 변화 감지를 위한 사전 계산
+    original_content = path.read_text(encoding='utf-8')
+    original_total_lines = len(original_content.splitlines())
+
     # 라인 번호 기준으로 역순 정렬 (뒤부터 수정해야 라인 번호가 안 바뀜)
     sorted_ops = sorted(operations, key=lambda x: x.get("start", 0), reverse=True)
 
-    lines = path.read_text(encoding='utf-8').splitlines()
+    lines = original_content.splitlines()
     applied_ops = 0
 
     for op in sorted_ops:
@@ -226,7 +273,23 @@ async def handle_patch_apply(arguments: Dict[str, Any]) -> str:
 
     path.write_text('\n'.join(lines) + '\n', encoding='utf-8')
 
-    return f"Applied {applied_ops} operations successfully"
+    # 📊 라인 수 변화 결과 계산
+    new_total_lines = len(lines)
+    line_change = new_total_lines - original_total_lines
+    
+    # 📋 상세한 변화 정보 메시지 생성
+    base_msg = f"Applied {applied_ops} operations successfully"
+    
+    if line_change == 0:
+        change_msg = "✅ Line numbers unchanged"
+    elif line_change > 0:
+        change_msg = f"📈 Added {line_change} lines total"
+    else:
+        change_msg = f"📉 Removed {abs(line_change)} lines total"
+    
+    total_msg = f"📊 Total lines: {original_total_lines} → {new_total_lines}"
+    
+    return f"{base_msg}\n{change_msg}\n{total_msg}"
 
 
 async def handle_smart_indent(arguments: Dict[str, Any]) -> str:

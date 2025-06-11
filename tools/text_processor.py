@@ -63,7 +63,7 @@ async def handle_find_and_replace(arguments: Dict[str, Any]) -> str:
 
 
 async def handle_insert_line(arguments: Dict[str, Any]) -> str:
-    """라인 삽입 도구 - 메모리 효율적 버전"""
+    """라인 삽입 도구 - 메모리 효율적 버전, 라인 수 변화 감지 포함"""
     path_str = arguments.get("path", "")
     line_number = arguments.get("line_number", 1)
     content = arguments.get("content", "")
@@ -71,6 +71,13 @@ async def handle_insert_line(arguments: Dict[str, Any]) -> str:
     path = normalize_path(path_str)
     if not path.exists():
         raise FileNotFoundError(f"File not found: {path}")
+
+    # 📊 라인 수 변화 감지를 위한 사전 계산
+    original_content = path.read_text(encoding='utf-8')
+    original_total_lines = len(original_content.splitlines())
+    
+    lines_to_add = 1  # 항상 1줄 추가
+    line_change = lines_to_add
 
     # 큰 파일을 위한 스트리밍 방식
     temp_file = tempfile.NamedTemporaryFile(mode='w', encoding='utf-8', delete=False)
@@ -99,7 +106,15 @@ async def handle_insert_line(arguments: Dict[str, Any]) -> str:
         temp_file.close()
         shutil.move(temp_file.name, path)
 
-        return f"Inserted line at {line_number}: '{content[:50]}...'"
+        # 📊 라인 수 변화 결과 계산
+        new_total_lines = original_total_lines + line_change
+        
+        # 📋 상세한 변화 정보 메시지 생성
+        base_msg = f"Inserted line at {line_number}: '{content[:50]}...'"
+        change_msg = f"📈 Added 1 line - Lines {line_number + 1}+ shifted DOWN by 1"
+        total_msg = f"📊 Total lines: {original_total_lines} → {new_total_lines}"
+        
+        return f"{base_msg}\n{change_msg}\n{total_msg}"
 
     except Exception as e:
         if os.path.exists(temp_file.name):
@@ -108,11 +123,20 @@ async def handle_insert_line(arguments: Dict[str, Any]) -> str:
 
 
 async def handle_append_to_file(arguments: Dict[str, Any]) -> str:
-    """파일에 추가 도구 - 이미 효율적"""
+    """파일에 추가 도구 - 라인 수 변화 감지 포함"""
     path_str = arguments.get("path", "")
     content = arguments.get("content", "")
 
     path = normalize_path(path_str)
+
+    # 📊 라인 수 변화 감지를 위한 사전 계산
+    original_content = path.read_text(encoding='utf-8')
+    original_total_lines = len(original_content.splitlines())
+    
+    # 추가될 라인 수 계산
+    lines_to_add = content.count('\n')
+    if content and not content.endswith('\n'):
+        lines_to_add += 1  # 마지막에 개행문자가 없으면 1줄 추가
 
     # 파일 끝에 추가 (메모리 효율적)
     with path.open('a', encoding='utf-8') as f:
@@ -120,7 +144,22 @@ async def handle_append_to_file(arguments: Dict[str, Any]) -> str:
             content += '\n'
         f.write(content)
 
-    return f"Appended {len(content)} characters to file"
+    # 📊 라인 수 변화 결과 계산
+    new_total_lines = original_total_lines + lines_to_add
+    
+    # 📋 상세한 변화 정보 메시지 생성
+    base_msg = f"Appended {len(content)} characters to file"
+    
+    if lines_to_add == 0:
+        change_msg = "✅ No new lines added"
+    elif lines_to_add == 1:
+        change_msg = "📈 Added 1 line at end of file"
+    else:
+        change_msg = f"📈 Added {lines_to_add} lines at end of file"
+    
+    total_msg = f"📊 Total lines: {original_total_lines} → {new_total_lines}"
+    
+    return f"{base_msg}\n{change_msg}\n{total_msg}"
 
 
 async def handle_get_file_section(arguments: Dict[str, Any]) -> str:

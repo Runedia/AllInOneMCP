@@ -1,0 +1,808 @@
+[
+  {
+    "name": "read_file",
+    "description": "📝 BASIC: Read entire file contents. Use get_file_section for specific parts or large files. 💡 For token efficiency, use tool_guide to get reading optimization tips.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "path": {
+          "type": "string",
+          "description": "File path to read"
+        }
+      },
+      "required": ["path"],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "write_file",
+    "description": "📝 BASIC: Write content to file. Use append_to_file to add content or patch_apply for multiple file operations.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "path": {
+          "type": "string",
+          "description": "File path to write"
+        },
+        "content": {
+          "type": "string",
+          "description": "Content to write"
+        }
+      },
+      "required": ["path", "content"],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "list_directory",
+    "description": "📝 BASIC: List directory contents. Use analyze_project for project overview or count_files for file statistics.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "path": {
+          "type": "string",
+          "description": "Directory path to list"
+        }
+      },
+      "required": ["path"],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "create_directory",
+    "description": "📝 BASIC: Create a directory. Simple and reliable for single directory creation.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "path": {
+          "type": "string",
+          "description": "Directory path to create"
+        }
+      },
+      "required": ["path"],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "list_allowed_directories",
+    "description": "🔧 ADVANCED: List all allowed directories. Essential for understanding server access permissions.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {},
+      "required": [],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "file_exists",
+    "description": "⚡ EXPERT: Check if file/directory exists (very token efficient - returns Yes/No). Much faster than read attempts.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "path": {
+          "type": "string",
+          "description": "Path to check"
+        }
+      },
+      "required": ["path"],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "count_files",
+    "description": "🔧 ADVANCED: Count files by extension (token efficient summary). Better than manual counting via list_directory.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "path": {
+          "type": "string",
+          "description": "Directory path"
+        },
+        "extension": {
+          "type": "string",
+          "description": "File extension (optional)"
+        }
+      },
+      "required": ["path"],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "get_directory_size",
+    "description": "🔧 ADVANCED: Get total directory size (compact summary). Much more efficient than calculating manually.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "path": {
+          "type": "string",
+          "description": "Directory path"
+        }
+      },
+      "required": ["path"],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "get_recent_files",
+    "description": "🔧 ADVANCED: Get most recently modified files (small list). Perfect for finding latest changes efficiently.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "path": {
+          "type": "string",
+          "description": "Directory path"
+        },
+        "limit": {
+          "type": "integer",
+          "description": "Max files to return (default: 5)",
+          "default": 5
+        }
+      },
+      "required": ["path"],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "analyze_project",
+    "description": "⚡ EXPERT: Analyze project structure and file types (compact overview). Best for understanding large projects quickly.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "path": {
+          "type": "string",
+          "description": "Project directory path"
+        }
+      },
+      "required": ["path"],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "git_status",
+    "description": "🔧 ADVANCED: Get detailed Git repository status. Shows modified, staged, and untracked files with comprehensive analysis.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "repo_path": {
+          "type": "string",
+          "description": "Git repository path (default: current directory)"
+        }
+      },
+      "required": [],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "git_add",
+    "description": "🔧 ADVANCED: Add files to Git staging area. Prepare files for the next commit.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "repo_path": {
+          "type": "string",
+          "description": "Git repository path (default: current directory)"
+        },
+        "files": {
+          "type": "array",
+          "description": "List of file paths to add",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": ["files"],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "git_commit",
+    "description": "🔧 ADVANCED: Commit staged changes to Git repository. Creates a new commit with the specified message.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "repo_path": {
+          "type": "string",
+          "description": "Git repository path (default: current directory)"
+        },
+        "message": {
+          "type": "string",
+          "description": "Commit message"
+        }
+      },
+      "required": ["message"],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "git_push",
+    "description": "🔧 ADVANCED: Push local branch to remote repository. Uploads commits to the remote server.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "repo_path": {
+          "type": "string",
+          "description": "Git repository path (default: current directory)"
+        },
+        "remote": {
+          "type": "string",
+          "description": "Remote repository name (default: origin)"
+        },
+        "branch": {
+          "type": "string",
+          "description": "Branch to push (default: current branch)"
+        }
+      },
+      "required": [],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "git_pull",
+    "description": "🔧 ADVANCED: Pull changes from remote repository and merge. Downloads and integrates remote changes.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "repo_path": {
+          "type": "string",
+          "description": "Git repository path (default: current directory)"
+        },
+        "remote": {
+          "type": "string",
+          "description": "Remote repository name (default: origin)"
+        },
+        "branch": {
+          "type": "string",
+          "description": "Branch to pull (default: current branch)"
+        }
+      },
+      "required": [],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "git_clone",
+    "description": "🔧 ADVANCED: Clone remote Git repository to local directory. Downloads entire repository from remote URL.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "url": {
+          "type": "string",
+          "description": "Git repository URL to clone"
+        },
+        "path": {
+          "type": "string",
+          "description": "Local path to clone to (optional)"
+        }
+      },
+      "required": ["url"],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "git_branch",
+    "description": "🔧 ADVANCED: Manage Git branches (create, switch, list, delete). Complete branch management functionality.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "repo_path": {
+          "type": "string",
+          "description": "Git repository path (default: current directory)"
+        },
+        "action": {
+          "type": "string",
+          "description": "Action to perform",
+          "enum": ["list", "create", "checkout", "delete"],
+          "default": "list"
+        },
+        "branch_name": {
+          "type": "string",
+          "description": "Branch name (required for create/checkout/delete)"
+        },
+        "base_branch": {
+          "type": "string",
+          "description": "Base branch for creation (optional)"
+        }
+      },
+      "required": [],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "git_log",
+    "description": "🔧 ADVANCED: Show Git commit history. Displays commit information including hash, author, date, and message.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "repo_path": {
+          "type": "string",
+          "description": "Git repository path (default: current directory)"
+        },
+        "max_count": {
+          "type": "integer",
+          "description": "Maximum number of commits to show (default: 10)",
+          "default": 10
+        }
+      },
+      "required": [],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "git_init",
+    "description": "🔧 ADVANCED: Initialize new Git repository. Creates a new Git repository in the specified directory.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "repo_path": {
+          "type": "string",
+          "description": "Directory path to initialize as Git repository"
+        }
+      },
+      "required": ["repo_path"],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "copy_file",
+    "description": "🔧 ADVANCED: Copy a file (very token efficient - uses OS commands). Much faster than read+write combination.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "source": {
+          "type": "string",
+          "description": "Source file path"
+        },
+        "destination": {
+          "type": "string",
+          "description": "Destination file path"
+        }
+      },
+      "required": ["source", "destination"],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "move_file",
+    "description": "🔧 ADVANCED: Move or rename a file (token efficient). Single operation for move+rename tasks.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "source": {
+          "type": "string",
+          "description": "Source file path"
+        },
+        "destination": {
+          "type": "string",
+          "description": "Destination file path"
+        }
+      },
+      "required": ["source", "destination"],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "delete_file",
+    "description": "🔧 ADVANCED: Delete a file (token efficient - simple confirmation). Use backup_file first for safety.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "path": {
+          "type": "string",
+          "description": "File path to delete"
+        },
+        "force": {
+          "type": "boolean",
+          "description": "Skip confirmation",
+          "default": false
+        }
+      },
+      "required": ["path"],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "backup_file",
+    "description": "⚡ EXPERT: Create backup copy with timestamp (very token efficient). Essential before risky operations.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "path": {
+          "type": "string",
+          "description": "File path to backup"
+        }
+      },
+      "required": ["path"],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "file_info",
+    "description": "⚡ EXPERT: Get file info without reading contents (very token efficient). Perfect for checking size, dates, permissions.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "path": {
+          "type": "string",
+          "description": "File path to check"
+        }
+      },
+      "required": ["path"],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "execute_command",
+    "description": "🔧 ADVANCED: Execute system command (token efficient for file operations). Use specific tools when available.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "command": {
+          "type": "string",
+          "description": "Command to execute"
+        },
+        "timeout": {
+          "type": "integer",
+          "description": "Timeout in seconds",
+          "default": 30
+        }
+      },
+      "required": ["command"],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "find_and_replace",
+    "description": "📝 BASIC: Simple text replacement. Use regex_replace for patterns or multiple variants. 💡 For complex operations, ask 'What's the best tool?' to get optimization via tool_guide.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "path": {
+          "type": "string",
+          "description": "File path to modify"
+        },
+        "find": {
+          "type": "string",
+          "description": "Text to find"
+        },
+        "replace": {
+          "type": "string",
+          "description": "Text to replace with"
+        },
+        "count": {
+          "type": "integer",
+          "description": "Max replacements (0 = all)",
+          "default": 0
+        }
+      },
+      "required": ["path", "find", "replace"],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "insert_line",
+    "description": "📝 BASIC: Insert single line. Use patch_apply for multiple edits or replace_line_range for multi-line changes. 💡 For 3+ operations, use tool_guide to get batch editing recommendations.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "path": {
+          "type": "string",
+          "description": "File path to modify"
+        },
+        "line_number": {
+          "type": "integer",
+          "description": "Line number to insert at (1-based)"
+        },
+        "content": {
+          "type": "string",
+          "description": "Content to insert"
+        }
+      },
+      "required": ["path", "line_number", "content"],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "append_to_file",
+    "description": "🔧 ADVANCED: Append content to end of file (very token efficient). Better than read+write for adding content.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "path": {
+          "type": "string",
+          "description": "File path to modify"
+        },
+        "content": {
+          "type": "string",
+          "description": "Content to append"
+        }
+      },
+      "required": ["path", "content"],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "get_file_section",
+    "description": "⚡ EXPERT: Get specific lines from file (token efficient reading). Much better than read_file for large files.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "path": {
+          "type": "string",
+          "description": "File path to read"
+        },
+        "start_line": {
+          "type": "integer",
+          "description": "Start line number (1-based)"
+        },
+        "end_line": {
+          "type": "integer",
+          "description": "End line number (1-based, optional)"
+        },
+        "context": {
+          "type": "integer",
+          "description": "Extra context lines around",
+          "default": 0
+        }
+      },
+      "required": ["path", "start_line"],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "count_occurrences",
+    "description": "🔧 ADVANCED: Count occurrences of text in file. More efficient than manual search through file content.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "path": {
+          "type": "string",
+          "description": "File path to search"
+        },
+        "search_text": {
+          "type": "string",
+          "description": "Text to search for"
+        },
+        "case_sensitive": {
+          "type": "boolean",
+          "description": "Case sensitive search",
+          "default": true
+        }
+      },
+      "required": ["path", "search_text"],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "replace_line_range",
+    "description": "🔧 ADVANCED: Replace multiple lines efficiently. Better than multiple insert_line calls.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "path": {
+          "type": "string",
+          "description": "File path to modify"
+        },
+        "start_line": {
+          "type": "integer",
+          "description": "Start line number (1-based)"
+        },
+        "end_line": {
+          "type": "integer",
+          "description": "End line number (1-based)"
+        },
+        "content": {
+          "type": "string",
+          "description": "New content to replace with"
+        }
+      },
+      "required": ["path", "start_line", "end_line", "content"],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "delete_lines",
+    "description": "🔧 ADVANCED: Delete multiple lines efficiently with line tracking.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "path": {
+          "type": "string",
+          "description": "File path to modify"
+        },
+        "start_line": {
+          "type": "integer",
+          "description": "Start line number (1-based)"
+        },
+        "end_line": {
+          "type": "integer",
+          "description": "End line number (1-based, optional)"
+        }
+      },
+      "required": ["path", "start_line"],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "regex_replace",
+    "description": "⚡ EXPERT: Pattern-based replacement with regex. Much more powerful than find_and_replace for complex patterns.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "path": {
+          "type": "string",
+          "description": "File path to modify"
+        },
+        "pattern": {
+          "type": "string",
+          "description": "Regular expression pattern"
+        },
+        "replacement": {
+          "type": "string",
+          "description": "Replacement text (can use $1, $2 for groups)"
+        },
+        "flags": {
+          "type": "string",
+          "description": "Regex flags (i=ignorecase, m=multiline, s=dotall)",
+          "default": ""
+        },
+        "count": {
+          "type": "integer",
+          "description": "Max replacements (0 = all)",
+          "default": 0
+        }
+      },
+      "required": ["path", "pattern", "replacement"],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "insert_at_position",
+    "description": "🔧 ADVANCED: Insert content at specific byte position. Use for binary files or precise positioning.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "path": {
+          "type": "string",
+          "description": "File path to modify"
+        },
+        "position": {
+          "type": "integer",
+          "description": "Byte position to insert at"
+        },
+        "content": {
+          "type": "string",
+          "description": "Content to insert"
+        }
+      },
+      "required": ["path", "position", "content"],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "smart_indent",
+    "description": "⚡ EXPERT: Automatic indentation adjustment for code. Much faster than manual editing.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "path": {
+          "type": "string",
+          "description": "File path to modify"
+        },
+        "start_line": {
+          "type": "integer",
+          "description": "Start line number (1-based)"
+        },
+        "end_line": {
+          "type": "integer",
+          "description": "End line number (1-based)"
+        },
+        "indent_change": {
+          "type": "integer",
+          "description": "Indent levels to add (positive) or remove (negative)"
+        },
+        "use_tabs": {
+          "type": "boolean",
+          "description": "Use tabs instead of spaces",
+          "default": false
+        }
+      },
+      "required": ["path", "start_line", "end_line", "indent_change"],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "patch_apply",
+    "description": "⚡ EXPERT: Apply multiple edits atomically. BEST for 3+ operations - prevents line number conflicts and maximizes efficiency.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "path": {
+          "type": "string",
+          "description": "File path to modify"
+        },
+        "operations": {
+          "type": "array",
+          "description": "List of operations to apply",
+          "items": {
+            "type": "object",
+            "properties": {
+              "type": {
+                "type": "string",
+                "enum": ["replace", "insert", "delete"]
+              },
+              "start": {
+                "type": "integer",
+                "description": "Start line (1-based)"
+              },
+              "end": {
+                "type": "integer",
+                "description": "End line (1-based, for replace/delete)"
+              },
+              "content": {
+                "type": "string",
+                "description": "Content for replace/insert operations"
+              }
+            },
+            "required": ["type", "start"]
+          }
+        }
+      },
+      "required": ["path", "operations"],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "tool_guide",
+    "description": "🎯 ESSENTIAL: Get smart tool recommendations and usage guide for optimal efficiency. Use this when unsure which tool is best for your task or when planning complex operations!",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "operation_type": {
+          "type": "string",
+          "description": "Type of operation: text_replace, line_edit, file_read, file_operations, directory_operations, code_format, performance, general",
+          "enum": [
+            "text_replace",
+            "line_edit",
+            "file_read",
+            "file_operations",
+            "directory_operations",
+            "code_format",
+            "performance",
+            "general"
+          ]
+        },
+        "show_full_guide": {
+          "type": "boolean",
+          "description": "Show complete tool selection guide",
+          "default": false
+        },
+        "show_performance": {
+          "type": "boolean",
+          "description": "Show detailed performance metrics and efficiency comparisons",
+          "default": false
+        }
+      },
+      "required": [],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "tool_comparison",
+    "description": "🔍 ADVANCED: Compare two specific tools directly with detailed performance and efficiency analysis",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "tool1": {
+          "type": "string",
+          "description": "First tool to compare"
+        },
+        "tool2": {
+          "type": "string",
+          "description": "Second tool to compare"
+        }
+      },
+      "required": ["tool1", "tool2"],
+      "additionalProperties": false
+    }
+  }
+]
