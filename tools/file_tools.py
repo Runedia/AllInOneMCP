@@ -287,9 +287,9 @@ async def handle_backup_file(arguments: Dict[str, Any]) -> str:
     if not path.exists():
         raise FileNotFoundError(f"File not found: {path}")
 
-    # 타임스탬프로 백업 파일명 생성
+    # 타임스탬프로 백업 파일의 확장자 생성
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    backup_name = f"{path.stem}.backup_{timestamp}{path.suffix}"
+    backup_name = f"{path.stem}.backup_{timestamp}"  # 확장자를 backup_timestamp로 변경
     backup_path = path.parent / backup_name
 
     shutil.copy2(path, backup_path)

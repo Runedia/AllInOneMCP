@@ -3,6 +3,7 @@
 """
 
 import shutil
+from datetime import datetime
 from typing import Dict, Any
 
 from tools.utils import normalize_path, detect_file_encoding
@@ -96,17 +97,15 @@ async def handle_delete_file(arguments: Dict[str, Any]) -> str:
 
 async def handle_backup_file(arguments: Dict[str, Any]) -> str:
     """파일 백업 도구"""
-    from datetime import datetime
-
     path_str = arguments.get("path", "")
     path = normalize_path(path_str)
 
     if not path.exists():
         raise FileNotFoundError(f"File not found: {path}")
 
-    # 타임스탬프로 백업 파일명 생성
+    # 타임스탬프로 백업 파일의 확장자 생성
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    backup_name = f"{path.stem}.backup_{timestamp}{path.suffix}"
+    backup_name = f"{path.stem}.backup_{timestamp}"  # 확장자를 backup_timestamp로 변경
     backup_path = path.parent / backup_name
 
     shutil.copy2(path, backup_path)
