@@ -804,5 +804,119 @@
       "required": ["tool1", "tool2"],
       "additionalProperties": false
     }
+  },
+  {
+    "name": "search_in_file",
+    "description": "🔧 ADVANCED: Search for text within a single file. Windows findstr-like functionality with line numbers, context, and regex support.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "path": {
+          "type": "string",
+          "description": "File path to search in"
+        },
+        "search_text": {
+          "type": "string",
+          "description": "Text to search for"
+        },
+        "case_sensitive": {
+          "type": "boolean",
+          "description": "Whether to match case (default: true)",
+          "default": true
+        },
+        "context_lines": {
+          "type": "integer",
+          "description": "Number of context lines to show around matches (default: 0)",
+          "default": 0
+        },
+        "use_regex": {
+          "type": "boolean",
+          "description": "Whether to use regular expression search (default: false)",
+          "default": false
+        },
+        "show_matches": {
+          "type": "boolean",
+          "description": "Whether to highlight matches in output (default: true)",
+          "default": true
+        }
+      },
+      "required": ["path", "search_text"],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "search_in_directory",
+    "description": "🔧 ADVANCED: Search for text in multiple files within a directory. Supports file extension filtering and performance limits.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "directory": {
+          "type": "string",
+          "description": "Directory path to search in"
+        },
+        "search_text": {
+          "type": "string",
+          "description": "Text to search for"
+        },
+        "file_extensions": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "File extensions to search (e.g., ['.py', '.js']). If null, searches all files."
+        },
+        "case_sensitive": {
+          "type": "boolean",
+          "description": "Whether to match case (default: true)",
+          "default": true
+        },
+        "context_lines": {
+          "type": "integer",
+          "description": "Number of context lines to show around matches (default: 0)",
+          "default": 0
+        },
+        "use_regex": {
+          "type": "boolean",
+          "description": "Whether to use regular expression search (default: false)",
+          "default": false
+        },
+        "max_files": {
+          "type": "integer",
+          "description": "Maximum number of files to search (default: 100)",
+          "default": 100
+        }
+      },
+      "required": ["directory", "search_text"],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "regex_search",
+    "description": "⚡ EXPERT: Advanced regular expression search with capture groups and detailed pattern matching. Much more powerful than basic text search.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "path": {
+          "type": "string",
+          "description": "File path to search in"
+        },
+        "pattern": {
+          "type": "string",
+          "description": "Regular expression pattern"
+        },
+        "flags": {
+          "type": "string",
+          "description": "Regex flags (i=ignorecase, m=multiline, s=dotall)",
+          "default": ""
+        },
+        "capture_groups": {
+          "type": "boolean",
+          "description": "Whether to capture and return regex groups (default: false)",
+          "default": false
+        }
+      },
+      "required": ["path", "pattern"],
+      "additionalProperties": false
+    }
   }
 ]

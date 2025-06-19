@@ -10,6 +10,7 @@ from tools.advanced_text_processor import *
 from tools.tool_guide_handler import *
 from tools.directory_manager import *
 from tools.file_io import *
+from tools.file_search import *
 
 # 도구 핸들러 매핑 - 기존 + 새로운 Git 도구들
 TOOL_HANDLERS = {
@@ -63,6 +64,11 @@ TOOL_HANDLERS = {
     "patch_apply": handle_patch_apply,
     "smart_indent": handle_smart_indent,
 
+    # 🔍 파일 검색 도구들
+    "search_in_file": handle_search_in_file,
+    "search_in_directory": handle_search_in_directory,
+    "regex_search": handle_regex_search,
+
     # 🎯 도구 추천 시스템
     "tool_guide": handle_tool_guide,
     "tool_comparison": handle_tool_comparison,
@@ -94,6 +100,9 @@ TOOL_CATEGORIES = {
     ],
     "metadata": [
         "file_exists", "file_info"
+    ],
+    "search": [
+        "search_in_file", "search_in_directory", "regex_search"
     ],
     "guidance": [
         "tool_guide", "tool_comparison"

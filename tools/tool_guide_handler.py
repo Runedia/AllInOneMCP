@@ -188,8 +188,54 @@ async def handle_tool_guide(arguments: Dict[str, Any]) -> str:
 
 💡 **Golden Rule**: Always choose the most specific tool for your task!"""
 
+    elif operation_type == "search":
+        return header_msg + """🔍 **File Search Tools:**
+
+⚡ **regex_search** (EXPERT): Use for complex pattern matching with capture groups
+   - Example: `def\\s+(\\w+)\\([^)]*\\):` to find function definitions
+   - Supports advanced flags: i=ignorecase, m=multiline, s=dotall
+   - Capture groups: Extract specific parts of matches
+   - Performance: Extremely fast for complex patterns
+   - Token efficiency: Most powerful for pattern-based searches
+
+🔧 **search_in_file** (ADVANCED): Use for text search in single files
+   - Simple text or basic regex search
+   - Context lines: Show surrounding lines for better understanding
+   - Line numbers: Exact location of matches
+   - Performance: Optimized for single file searches
+   - Token efficiency: Good for specific file searches
+
+🔧 **search_in_directory** (ADVANCED): Use for searching across multiple files
+   - File extension filtering: Search only specific file types
+   - Max files limit: Performance protection (default: 100 files)
+   - Directory traversal: Recursive search with hidden file/folder exclusion
+   - Performance: Handles large directories efficiently
+   - Token efficiency: Best for project-wide searches
+
+💡 **Usage Guidelines:**
+- Use **regex_search** for complex patterns (function names, variables, etc.)
+- Use **search_in_file** for simple text searches in known files
+- Use **search_in_directory** for finding text across your project
+- Always specify file_extensions for better performance in large projects
+
+🚀 **Performance Tips:**
+- Regex patterns are compiled once and reused for efficiency
+- Context lines help understand matches without separate file reads
+- Directory search respects .gitignore-style hidden folder exclusions
+- UTF-8 and CP949 encodings are automatically handled
+
+📊 **Token Efficiency:**
+1. ⚡ **regex_search** - Most efficient for pattern matching
+2. 🔧 **search_in_file** - Good for single file searches
+3. 🔧 **search_in_directory** - Best for multi-file searches
+
+🎯 **Examples:**
+- Find functions: `regex_search(pattern="def\\s+(\\w+)", capture_groups=true)`
+- Find TODOs: `search_in_directory(search_text="TODO", file_extensions=[".py"])`
+- Simple search: `search_in_file(search_text="import", context_lines=2)`"""
+
     else:
-        return header_msg + f"❓ Unknown operation type: '{operation_type}'\\n\\n💡 **Available types**: text_replace, line_edit, file_read, file_operations, directory_operations, code_format, performance, general\\n\\n🔧 **For performance details**: Add show_performance=true to any category"
+        return header_msg + f"❓ Unknown operation type: '{operation_type}'\\n\\n💡 **Available types**: text_replace, line_edit, file_read, file_operations, directory_operations, code_format, search, performance, general\\n\\n🔧 **For performance details**: Add show_performance=true to any category"
 
 
 # Additional helper functions for enhanced recommendations
