@@ -359,7 +359,7 @@ def get_search_statistics(results: Dict[str, List[SearchResult]]) -> Dict:
 # MCP 서버 핸들러 함수들
 # ========================================
 
-def handle_search_in_file(arguments: Dict[str, Any]) -> Dict[str, Any]:
+async def handle_search_in_file(arguments: Dict[str, Any]) -> Dict[str, Any]:
     """단일 파일 검색 핸들러"""
     try:
         file_path = arguments.get("path", "")
@@ -424,7 +424,7 @@ def handle_search_in_file(arguments: Dict[str, Any]) -> Dict[str, Any]:
         return {"error": f"파일 검색 중 오류 발생: {str(e)}"}
 
 
-def handle_search_in_directory(arguments: Dict[str, Any]) -> Dict[str, Any]:
+async def handle_search_in_directory(arguments: Dict[str, Any]) -> Dict[str, Any]:
     """디렉토리 검색 핸들러"""
     try:
         directory = arguments.get("directory", "")
@@ -503,7 +503,7 @@ def handle_search_in_directory(arguments: Dict[str, Any]) -> Dict[str, Any]:
         return {"error": f"디렉토리 검색 중 오류 발생: {str(e)}"}
 
 
-def handle_regex_search(arguments: Dict[str, Any]) -> Dict[str, Any]:
+async def handle_regex_search(arguments: Dict[str, Any]) -> Dict[str, Any]:
     """고급 정규식 검색 핸들러"""
     try:
         file_path = arguments.get("path", "")

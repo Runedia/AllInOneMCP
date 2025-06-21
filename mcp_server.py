@@ -47,7 +47,18 @@ def create_mcp_server():
         try:
             if name in TOOL_HANDLERS:
                 result = await TOOL_HANDLERS[name](arguments)
-                return [types.TextContent(type="text", text=result)]
+                # result가 dict인 경우 적절한 텍스트로 변환
+                if isinstance(result, dict):
+                    if 'formatted_results' in result:
+                        # 검색 결과의 경우 formatted_results 사용
+                        text_result = result['formatted_results']
+                    else:
+                        # 기타 경우 JSON으로 변환
+                        text_result = json.dumps(result, ensure_ascii=False, indent=2)
+                else:
+                    text_result = str(result)
+                
+                return [types.TextContent(type="text", text=text_result)]
             else:
                 raise ValueError(f"Unknown tool: {name}")
 
