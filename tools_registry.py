@@ -2,7 +2,6 @@
 모든 도구들을 통합하는 레지스트리 - Git 도구 개선 포함
 """
 
-from tools.command_executor import *
 from tools.git_tools import *
 from tools.text_processor import *
 from tools.file_metadata import *
@@ -30,9 +29,6 @@ TOOL_HANDLERS = {
     "get_directory_size": handle_get_directory_size,
     "get_recent_files": handle_get_recent_files,
     "analyze_project": handle_analyze_project,
-
-    # 🆕 명령어 실행 (Git 명령어 차단)
-    "execute_command": handle_execute_command,
 
     # 🆕 Git 도구들 (GitPython 기반)
     "git_status": handle_git_status,
@@ -82,9 +78,6 @@ TOOL_CATEGORIES = {
     "directory": [
         "list_directory", "create_directory", "list_allowed_directories",
         "count_files", "get_directory_size", "get_recent_files", "analyze_project"
-    ],
-    "system": [
-        "execute_command"
     ],
     "git": [
         "git_status", "git_add", "git_commit", "git_push", "git_pull",

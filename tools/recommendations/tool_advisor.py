@@ -370,21 +370,21 @@ class ToolAdvisor:
         if not suggestion:
             return ""
         
-        msg = f"💡 **Better Tool Available**: Consider using `{suggested_tool}` instead of `{current_tool}`\\n"
-        msg += f"🎯 **When to use**: {suggestion.when_to_use}\\n"
-        msg += f"✅ **Advantages**: {', '.join(suggestion.advantages)}\\n"
+        msg = f"[TIP] **Better Tool Available**: Consider using `{suggested_tool}` instead of `{current_tool}`\\n"
+        msg += f"[TARGET] **When to use**: {suggestion.when_to_use}\\n"
+        msg += f"[GOOD FOR] **Advantages**: {', '.join(suggestion.advantages)}\\n"
         
         if suggestion.performance_note:
-            msg += f"⚡ **Performance**: {suggestion.performance_note}\\n"
+            msg += f"[BEST] **Performance**: {suggestion.performance_note}\\n"
         
         if suggestion.token_efficiency:
-            msg += f"🎯 **Efficiency**: {suggestion.token_efficiency}\\n"
+            msg += f"[TARGET] **Efficiency**: {suggestion.token_efficiency}\\n"
         
         return msg
     
     def get_tool_guide(self) -> str:
         """Generate comprehensive tool usage guide"""
-        guide = "🛠️ **Tool Selection Guide**\\n\\n"
+        guide = "[TOOL SELECTION GUIDE] **Tool Selection Guide**\\n\\n"
         
         for group_name, tools in self.tool_groups.items():
             guide += f"**{group_name.replace('_', ' ').title()}:**\\n"
@@ -395,7 +395,7 @@ class ToolAdvisor:
             for tool in sorted_tools:
                 rec = self.recommendations.get(tool)
                 if rec:
-                    priority_emoji = "⚡" if rec.priority == 1 else "🔧" if rec.priority == 2 else "📝"
+                    priority_emoji = "[BEST]" if rec.priority == 1 else "[ADVANCED]" if rec.priority == 2 else "[BASIC]"
                     guide += f"  {priority_emoji} `{tool}`: {rec.when_to_use}"
                     
                     if rec.performance_note:
@@ -413,16 +413,16 @@ class ToolAdvisor:
             return "Category not found"
         
         tools = self.tool_groups[tool_category]
-        comparison = f"⚡ **Performance Comparison - {tool_category.replace('_', ' ').title()}:**\\n\\n"
+        comparison = f"[BEST] **Performance Comparison - {tool_category.replace('_', ' ').title()}:**\\n\\n"
         
         for tool in sorted(tools, key=lambda t: self.recommendations.get(t, ToolRecommendation("", 999, [], [], "", "")).priority):
             rec = self.recommendations.get(tool)
             if rec:
-                priority_emoji = "⚡" if rec.priority == 1 else "🔧" if rec.priority == 2 else "📝"
+                priority_emoji = "[BEST]" if rec.priority == 1 else "[ADVANCED]" if rec.priority == 2 else "[BASIC]"
                 comparison += f"{priority_emoji} **{tool}**\\n"
-                comparison += f"   📊 Performance: {rec.performance_note}\\n"
-                comparison += f"   🎯 Token Efficiency: {rec.token_efficiency}\\n"
-                comparison += f"   ✅ Best for: {rec.when_to_use}\\n\\n"
+                comparison += f"   [PERFORMANCE] Performance: {rec.performance_note}\\n"
+                comparison += f"   [TARGET] Token Efficiency: {rec.token_efficiency}\\n"
+                comparison += f"   [GOOD FOR] Best for: {rec.when_to_use}\\n\\n"
         
         return comparison
     
@@ -470,7 +470,7 @@ class ToolAdvisor:
             tool = recommendations[0]
             rec = self.recommendations.get(tool)
             if rec:
-                return f"🎯 **Recommended**: `{tool}` - {reason}\\n💡 {rec.when_to_use}"
+                return f"[TARGET] **Recommended**: `{tool}` - {reason}\\n[TIP] {rec.when_to_use}"
         
         return "No specific recommendation available"
 
