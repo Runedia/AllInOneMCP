@@ -31,7 +31,6 @@ class ToolAdvisor:
         """Group tools by functionality"""
         return {
             "text_replacement": [
-                "find_and_replace",      # Basic - exact matches
                 "regex_replace"          # Expert - pattern matching
             ],
             "line_editing": [
@@ -79,16 +78,6 @@ class ToolAdvisor:
         """Initialize comprehensive tool recommendations"""
         return {
             # TEXT REPLACEMENT TOOLS
-            "find_and_replace": ToolRecommendation(
-                tool_name="find_and_replace",
-                priority=3,
-                use_cases=["Exact string replacement", "Simple literal text changes", "Safe replacements"],
-                advantages=["Simple to use", "No regex knowledge needed", "Safe for beginners"],
-                when_to_use="When replacing exact, literal text matches",
-                avoid_when="Multiple similar patterns exist or regex would be more efficient",
-                performance_note="Memory efficient streaming, but limited to literal matches",
-                token_efficiency="Standard efficiency - reads file once"
-            ),
             "regex_replace": ToolRecommendation(
                 tool_name="regex_replace",
                 priority=1,
@@ -96,7 +85,7 @@ class ToolAdvisor:
                 advantages=["Powerful pattern matching", "Single operation for complex changes", "Memory efficient", "Group capture support"],
                 when_to_use="Multiple patterns, similar variants, or complex text transformations",
                 avoid_when="Simple literal string replacement",
-                performance_note="Up to 10x faster than multiple find_and_replace calls",
+                performance_note="Highly optimized for pattern matching",
                 token_efficiency="High efficiency - handles multiple patterns in one pass"
             ),
 
@@ -452,15 +441,8 @@ class ToolAdvisor:
         recommendations = []
         
         if operation_type == "text_replace":
-            pattern_based = kwargs.get("pattern_based", False)
-            multiple_variants = kwargs.get("multiple_variants", False)
-            
-            if pattern_based or multiple_variants:
-                recommendations.append("regex_replace")
-                reason = "Pattern matching or multiple variants detected"
-            else:
-                recommendations.append("find_and_replace")
-                reason = "Simple literal replacement"
+            recommendations.append("regex_replace")
+            reason = "Pattern-based text replacement recommended"
         
         elif operation_type == "line_edit":
             line_count = kwargs.get("line_count", 1)

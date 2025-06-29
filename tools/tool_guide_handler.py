@@ -34,13 +34,9 @@ async def handle_tool_guide(arguments: Dict[str, Any]) -> str:
 [BEST] regex_replace - Use for patterns, multiple variants, or complex replacements
    - Example: \\\\d+ to replace all numbers
    - Supports capture groups: (\\\\w+)\\\\s+(\\\\w+) → $2 $1
-   - Performance: Up to 10x faster than multiple find_and_replace calls
+   - Performance: Highly optimized for pattern matching
    - Token efficiency: Handles multiple patterns in one pass
 
-[BASIC] find_and_replace - Use only for exact string matches
-   - Simple and safe for literal text
-   - No pattern matching capabilities
-   - Performance: Memory efficient streaming, but limited to literal matches
 
 [RECOMMENDATION] Use regex_replace unless you need exact literal matching.
 
@@ -185,7 +181,6 @@ async def handle_tool_guide(arguments: Dict[str, Any]) -> str:
 2. [BEST] backup_file - OS-level copy
 3. [BEST] smart_indent - Bulk operations
 4. [ADVANCED] get_file_section - Targeted reading
-5. [BASIC] find_and_replace - Sequential processing
 
 [GOLDEN RULE] Always choose the most specific tool for your task!"""
 

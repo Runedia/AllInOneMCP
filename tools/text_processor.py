@@ -9,59 +9,6 @@ from typing import Dict, Any
 
 from tools.utils import normalize_path
 
-
-async def handle_find_and_replace(arguments: Dict[str, Any]) -> str:
-    """찾기 및 바꾸기 도구 - 개선된 버전"""
-    path_str = arguments.get("path", "")
-    find_text = arguments.get("find", "")
-    replace_text = arguments.get("replace", "")
-    max_count = arguments.get("count", 0)
-    case_sensitive = arguments.get("case_sensitive", True)
-
-    path = normalize_path(path_str)
-    if not path.exists():
-        raise FileNotFoundError(f"File not found: {path}")
-
-    # 대소문자 구분 옵션
-    if not case_sensitive:
-        # 대소문자를 무시하는 경우 정규식 사용
-        import re
-        pattern = re.escape(find_text)
-        regex = re.compile(pattern, re.IGNORECASE)
-
-    replacements = 0
-    temp_file = tempfile.NamedTemporaryFile(mode='w', encoding='utf-8', delete=False)
-
-    try:
-        with path.open('r', encoding='utf-8') as infile:
-            for line in infile:
-                if max_count == 0 or replacements < max_count:
-                    if case_sensitive:
-                        if find_text in line:
-                            original_count = line.count(find_text)
-                            new_line = line.replace(find_text, replace_text)
-                            replacements += original_count
-                        else:
-                            new_line = line
-                    else:
-                        new_line, count = regex.subn(replace_text, line)
-                        replacements += count
-                    temp_file.write(new_line)
-                else:
-                    temp_file.write(line)
-
-        temp_file.close()
-        shutil.move(temp_file.name, path)
-
-        case_info = "" if case_sensitive else " (case-insensitive)"
-        return f"Replaced '{find_text}' → '{replace_text}' ({replacements} times){case_info}"
-
-    except Exception as e:
-        if os.path.exists(temp_file.name):
-            os.unlink(temp_file.name)
-        raise e
-
-
 async def handle_insert_line(arguments: Dict[str, Any]) -> str:
     """라인 삽입 도구 - 메모리 효율적 버전, 라인 수 변화 감지 포함"""
     path_str = arguments.get("path", "")
@@ -76,7 +23,18 @@ async def handle_insert_line(arguments: Dict[str, Any]) -> str:
     original_content = path.read_text(encoding='utf-8')
     original_total_lines = len(original_content.splitlines())
     
-    lines_to_add = 1  # 항상 1줄 추가
+    # 실제 추가될 줄 수 계산 (multi-line 지원)
+    if content:
+        # content의 실제 줄 수 계산
+        content_lines = content.split('\n')
+        # 마지막이 빈 문자열이면 (즉, \n으로 끝나면) 실제 줄 수에서 1 제외
+        if content_lines and content_lines[-1] == '':
+            lines_to_add = len(content_lines) - 1
+        else:
+            lines_to_add = len(content_lines)
+    else:
+        lines_to_add = 1  # 빈 content라도 1줄은 추가됨
+    
     line_change = lines_to_add
 
     # 큰 파일을 위한 스트리밍 방식
@@ -110,8 +68,12 @@ async def handle_insert_line(arguments: Dict[str, Any]) -> str:
         new_total_lines = original_total_lines + line_change
         
         # 📋 상세한 변화 정보 메시지 생성
-        base_msg = f"Inserted line at {line_number}: '{content[:50]}...'"
-        change_msg = f"📈 Added 1 line - Lines {line_number + 1}+ shifted DOWN by 1"
+        if lines_to_add == 1:
+            base_msg = f"Inserted line at {line_number}"
+            change_msg = f"📈 Added 1 line - Lines {line_number + 1}+ shifted DOWN by 1"
+        else:
+            base_msg = f"Inserted {lines_to_add} lines at {line_number}"
+            change_msg = f"📈 Added {lines_to_add} lines - Lines {line_number + lines_to_add}+ shifted DOWN by {lines_to_add}"
         total_msg = f"📊 Total lines: {original_total_lines} → {new_total_lines}"
         
         return f"{base_msg}\n{change_msg}\n{total_msg}"

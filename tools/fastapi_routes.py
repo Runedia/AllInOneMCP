@@ -71,7 +71,7 @@ def register_routes(app: FastAPI):
                 "get_recent_files", "analyze_project", "git_status_summary",
                 "copy_file", "move_file", "delete_file", "backup_file",
                 "file_info",
-                "find_and_replace", "insert_line", "append_to_file", "get_file_section"
+                "insert_line", "append_to_file", "get_file_section"
             ],
             "endpoints": {
                 "docs": "/docs",

@@ -44,7 +44,6 @@ TOOL_HANDLERS = {
     "git_init": handle_git_init,
 
     # 기본 텍스트 처리
-    "find_and_replace": handle_find_and_replace,
     "insert_line": handle_insert_line,
     "append_to_file": handle_append_to_file,
     "get_file_section": handle_get_file_section,
@@ -86,7 +85,7 @@ TOOL_CATEGORIES = {
         "git_clone", "git_branch", "git_log", "git_init"
     ],
     "text_basic": [
-        "find_and_replace", "insert_line", "append_to_file",
+        "insert_line", "append_to_file",
         "get_file_section", "count_occurrences"
     ],
     "text_advanced": [
