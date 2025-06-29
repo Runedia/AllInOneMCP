@@ -48,7 +48,7 @@ async def handle_create_directory(arguments: Dict[str, Any]) -> str:
     path.mkdir(parents=True, exist_ok=True)
     return f"Successfully created directory: {path}"
 
-async def handle_create_directory_multiple(arguments: Dict[str, Any]) -> str:
+async def handle_create_directories(arguments: Dict[str, Any]) -> str:
     """다중 디렉토리 생성 도구 (부모 디렉토리도 자동 생성)"""
     paths = arguments.get("paths", [])
     if not paths:
