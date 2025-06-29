@@ -50,6 +50,7 @@ class ToolAdvisor:
                 "move_file",            # Advanced - rename/move
                 "delete_file",          # Advanced - safe deletion
                 "backup_file",          # Expert - timestamp backup
+                "backup_files",         # Expert - batch backup operations
                 "append_to_file"        # Advanced - efficient append
             ],
             "directory_operations": [
@@ -214,6 +215,16 @@ class ToolAdvisor:
                 performance_note="Essential safety practice, minimal overhead",
                 token_efficiency="Extremely efficient - OS-level copy"
             ),
+            "backup_files": ToolRecommendation(
+                tool_name="backup_files",
+                priority=1,
+                use_cases=["Batch backup operations", "Multiple file safety", "Consistent backup sets", "Pre-deployment safety"],
+                advantages=["Consistent timestamps", "Batch efficiency", "Failure tracking", "Size statistics"],
+                when_to_use="Need to backup multiple files with consistent timestamps",
+                avoid_when="Only need single file backup (use backup_file)",
+                performance_note="Much more efficient than multiple backup_file calls",
+                token_efficiency="High efficiency for batch operations with detailed reporting"
+            ),
             "append_to_file": ToolRecommendation(
                 tool_name="append_to_file",
                 priority=2,
@@ -224,7 +235,6 @@ class ToolAdvisor:
                 performance_note="Much faster than read+modify+write",
                 token_efficiency="High efficiency - no file reading"
             ),
-
             # DIRECTORY OPERATIONS
             "list_directory": ToolRecommendation(
                 tool_name="list_directory",

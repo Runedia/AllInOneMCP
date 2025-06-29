@@ -918,5 +918,23 @@
       "required": ["path", "pattern"],
       "additionalProperties": false
     }
+  },
+  {
+    "name": "backup_files",
+    "description": "[EXPERT] Create multiple backup copies with consistent timestamp (very token efficient). Essential for batch backup operations before risky changes.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "paths": {
+          "type": "array",
+          "description": "List of file paths to backup",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": ["paths"],
+      "additionalProperties": false
+    }
   }
 ]

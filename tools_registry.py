@@ -20,6 +20,7 @@ TOOL_HANDLERS = {
     "move_file": handle_move_file,
     "delete_file": handle_delete_file,
     "backup_file": handle_backup_file,
+    "backup_files": handle_backup_files,
 
     # 디렉토리 관리
     "list_directory": handle_list_directory,
@@ -74,7 +75,7 @@ TOOL_HANDLERS = {
 # 도구 카테고리별 분류
 TOOL_CATEGORIES = {
     "file_io": [
-        "read_file", "write_file", "copy_file", "move_file", "delete_file", "backup_file"
+        "read_file", "write_file", "copy_file", "move_file", "delete_file", "backup_file", "backup_files"
     ],
     "directory": [
         "list_directory", "create_directory", "create_directory_multiple", "list_allowed_directories",
