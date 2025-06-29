@@ -7,6 +7,7 @@ import traceback
 import json
 import os
 from typing import List, Dict, Any, Sequence
+import config
 
 try:
     from mcp.server import Server
@@ -29,7 +30,7 @@ def create_mcp_server():
         return None
 
     print("[DEBUG] Creating MCP server", file=sys.stderr)
-    server = Server("hybrid-filesystem")
+    server = Server(config.SERVER_NAME)
 
     @server.list_tools()
     async def handle_list_tools() -> List[types.Tool]:
@@ -147,8 +148,8 @@ async def run_mcp_server():
                 read_stream,
                 write_stream,
                 InitializationOptions(
-                    server_name="hybrid-filesystem",
-                    server_version="0.6.0",
+                    server_name=config.SERVER_NAME,
+                    server_version=config.SERVER_VERSION,
                     capabilities=capabilities,
                 ),
             )
