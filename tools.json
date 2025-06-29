@@ -16,7 +16,7 @@
   },
   {
     "name": "write_file",
-    "description": "[BASIC] Write content to file. Use append_to_file to add content or patch_apply for multiple file operations.",
+    "description": "[BASIC] Write content to file. Use append_to_file to add content or multiple patch_apply calls for complex edits.",
     "inputSchema": {
       "type": "object",
       "properties": {
@@ -460,7 +460,7 @@
   },
   {
     "name": "insert_line",
-    "description": "[BASIC] Insert single line. Use patch_apply for multiple edits or replace_line_range for multi-line changes. [TIP] For 3+ operations, use tool_guide to get batch editing recommendations.",
+    "description": "[BASIC] Insert single line. Use multiple patch_apply calls for complex edits or replace_line_range for multi-line changes. [WARNING] Consecutive inserts at same line number will appear in reverse order (LIFO). [TIP] For multiple operations, use separate patch_apply calls for safety.",
     "inputSchema": {
       "type": "object",
       "properties": {
@@ -692,7 +692,7 @@
   },
   {
     "name": "patch_apply",
-    "description": "[EXPERT] Apply multiple edits atomically with enhanced multiline support. BEST for 3+ operations - prevents line number conflicts and maximizes efficiency. Supports multiline content, robust validation, and detailed operation tracking.",
+    "description": "[EXPERT] Apply single edit operation safely. Prevents line number conflicts by processing one operation at a time. For multiple edits, use separate patch_apply calls. Supports multiline content and detailed operation tracking.",
     "inputSchema": {
       "type": "object",
       "properties": {
@@ -702,7 +702,8 @@
         },
         "operations": {
           "type": "array",
-          "description": "List of operations to apply atomically. Each operation can handle multiline content.",
+          "description": "Single operation array (multiple operations no longer supported for safety). Use separate calls for multiple edits.",
+          "maxItems": 1,
           "items": {
             "type": "object",
             "properties": {
@@ -717,7 +718,7 @@
               },
               "end": {
                 "type": "integer",
-                "description": "End line number (1-based, inclusive). Required for replace/delete operations. For replace: last line to replace. For delete: last line to remove"
+                "description": "End line number (1-based, inclusive). Optional for replace/delete operations (defaults to start line). For replace: last line to replace. For delete: last line to remove"
               },
               "content": {
                 "type": "string",

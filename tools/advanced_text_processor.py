@@ -233,125 +233,115 @@ async def handle_insert_at_position(arguments: Dict[str, Any]) -> str:
         raise e
 
 
-async def handle_patch_apply(arguments: Dict[str, Any]) -> str:
-    """여러 편집 작업을 한 번에 적용 (배치 처리) - 개선된 버전"""
-    path_str = arguments.get("path", "")
-    operations = arguments.get("operations", [])  # [{"type": "replace", "start": 1, "end": 2, "content": "new"}]
 
+async def handle_patch_apply(arguments: Dict[str, Any]) -> str:
+    """단일 편집 작업만 처리 (안전한 개별 처리 방식)"""
+    path_str = arguments.get("path", "")
+    
+    # ⚠️ operations 배열 사용 시 에러 발생
+    if "operations" in arguments:
+        operations = arguments.get("operations", [])
+        if isinstance(operations, list) and len(operations) > 1:
+            error_msg = (
+                "🚨 Multiple operations are no longer supported for safety reasons.\n\n"
+                "💡 Please use individual patch_apply calls instead:\n"
+                "   ❌ patch_apply({\"operations\": [{\"type\": \"replace\", ...}, {\"type\": \"delete\", ...}]})\n"
+                "   ✅ patch_apply({\"type\": \"replace\", \"start\": 10, \"content\": \"...\"})\n"
+                "   ✅ patch_apply({\"type\": \"delete\", \"start\": 15})\n\n"
+                "📈 Benefits: Predictable results, safer editing, easier debugging\n"
+                f"📊 Your request has {len(operations)} operations - please split into {len(operations)} separate calls"
+            )
+            raise ValueError(error_msg)
+        elif isinstance(operations, list) and len(operations) == 1:
+            # 단일 operation이 배열로 감싸진 경우 - 자동으로 추출
+            operation = operations[0]
+        else:
+            raise ValueError("Invalid operations format")
+    else:
+        # 개별 파라미터로 operation 구성
+        operation = {
+            "type": arguments.get("type"),
+            "start": arguments.get("start"),
+            "end": arguments.get("end"),
+            "content": arguments.get("content", "")
+        }
+
+    # 파라미터 검증
+    op_type = operation.get("type", "")
+    if not op_type:
+        raise ValueError("Missing required parameter: 'type' (must be 'replace', 'insert', or 'delete')")
+    
+    if op_type not in ["replace", "insert", "delete"]:
+        raise ValueError(f"Invalid operation type '{op_type}'. Must be 'replace', 'insert', or 'delete'")
+    
+    start = operation.get("start")
+    if start is None or not isinstance(start, int) or start < 1:
+        raise ValueError("Missing or invalid 'start' parameter. Must be positive integer >= 1")
+
+    # 파일 처리
     path = normalize_path(path_str)
     if not path.exists():
         raise FileNotFoundError(f"File not found: {path}")
 
-    if not operations:
-        return "No operations provided"
-
-    # 📊 라인 수 변화 감지를 위한 사전 계산
+    # 📊 파일 상태 확인
     original_content = path.read_text(encoding='utf-8')
     original_total_lines = len(original_content.splitlines())
     
-    # 입력 검증
-    for i, op in enumerate(operations):
-        op_type = op.get("type", "")
-        if op_type not in ["replace", "insert", "delete"]:
-            raise ValueError(f"Operation {i}: Invalid type '{op_type}'. Must be 'replace', 'insert', or 'delete'")
-        
-        start = op.get("start")
-        if start is None or not isinstance(start, int) or start < 1:
-            raise ValueError(f"Operation {i}: Invalid start line number. Must be positive integer >= 1")
-        
-        if start > original_total_lines + 1:  # insert는 마지막 라인 + 1까지 허용
-            raise ValueError(f"Operation {i}: Start line {start} exceeds file length ({original_total_lines})")
-        
-        if op_type in ["replace", "delete"]:
-            end = op.get("end", start)  # 기본값은 start와 같음 (한 줄만)
-            if not isinstance(end, int) or end < start:
-                raise ValueError(f"Operation {i}: Invalid end line number. Must be >= start ({start})")
-            if end > original_total_lines:
-                raise ValueError(f"Operation {i}: End line {end} exceeds file length ({original_total_lines})")
-
-    # 라인 번호 기준으로 역순 정렬 (뒤부터 수정해야 라인 번호가 안 바뀜)
-    sorted_ops = sorted(operations, key=lambda x: x.get("start", 0), reverse=True)
+    if start > original_total_lines + 1:  # insert는 마지막 라인 + 1까지 허용
+        raise ValueError(f"Start line {start} exceeds file length ({original_total_lines})")
 
     lines = original_content.splitlines()
-    applied_ops = 0
-    operation_details = []
+    start_idx = start - 1  # 0-based로 변환
+    content = operation.get("content", "")
 
-    for op in sorted_ops:
-        op_type = op.get("type", "")
-        start = op.get("start", 1) - 1  # 0-based로 변환
-        content = op.get("content", "")
+    # Operation별 처리
+    if op_type == "replace":
+        end = operation.get("end", start)
+        if not isinstance(end, int) or end < start or end > original_total_lines:
+            raise ValueError(f"Invalid end line number. Must be >= start ({start}) and <= {original_total_lines}")
         
-        try:
-            if op_type == "replace":
-                end = op.get("end", start + 2) - 1  # 1-based end를 0-based로 변환
-                
-                # content를 라인별로 분할 (빈 content면 빈 리스트)
-                if content:
-                    content_lines = content.splitlines()
-                else:
-                    content_lines = []
-                
-                # 기존 라인들을 새 content로 교체
-                replaced_count = end - start + 1
-                lines[start:end + 1] = content_lines
-                applied_ops += 1
-                
-                operation_details.append(f"Replace lines {start+1}-{end+1} ({replaced_count} → {len(content_lines)} lines)")
-                
-            elif op_type == "insert":
-                # content를 라인별로 분할하여 삽입
-                if content:
-                    content_lines = content.splitlines()
-                    # 역순으로 삽입 (여러 라인을 순서대로 삽입하기 위해)
-                    for i, line in enumerate(content_lines):
-                        lines.insert(start + i, line)
-                    applied_ops += 1
-                    operation_details.append(f"Insert {len(content_lines)} lines at position {start+1}")
-                else:
-                    # 빈 content인 경우 빈 라인 하나 삽입
-                    lines.insert(start, "")
-                    applied_ops += 1
-                    operation_details.append(f"Insert empty line at position {start+1}")
-                    
-            elif op_type == "delete":
-                end = op.get("end", start + 2) - 1  # 1-based end를 0-based로 변환
-                deleted_count = end - start + 1
-                del lines[start:end + 1]
-                applied_ops += 1
-                operation_details.append(f"Delete lines {start+1}-{end+1} ({deleted_count} lines)")
-                
-        except Exception as e:
-            raise RuntimeError(f"Failed to apply {op_type} operation at line {start+1}: {str(e)}")
+        end_idx = end - 1
+        content_lines = content.splitlines() if content else []
+        replaced_count = end - start + 1
+        lines[start_idx:end_idx + 1] = content_lines
+        
+        detail = f"Replace lines {start}-{end} ({replaced_count} → {len(content_lines)} lines)"
+        line_change = len(content_lines) - replaced_count
+        
+    elif op_type == "insert":
+        content_lines = content.splitlines() if content else [""]
+        for i, line in enumerate(content_lines):
+            lines.insert(start_idx + i, line)
+        
+        detail = f"Insert {len(content_lines)} lines at position {start}"
+        line_change = len(content_lines)
+        
+    elif op_type == "delete":
+        end = operation.get("end", start)
+        if not isinstance(end, int) or end < start or end > original_total_lines:
+            raise ValueError(f"Invalid end line number. Must be >= start ({start}) and <= {original_total_lines}")
+        
+        end_idx = end - 1
+        deleted_count = end - start + 1
+        del lines[start_idx:end_idx + 1]
+        
+        detail = f"Delete lines {start}-{end} ({deleted_count} lines)"
+        line_change = -deleted_count
 
-    # 파일에 쓰기
-    try:
-        path.write_text('\n'.join(lines) + '\n', encoding='utf-8')
-    except Exception as e:
-        raise RuntimeError(f"Failed to write file: {str(e)}")
-
-    # 📊 라인 수 변화 결과 계산
-    new_total_lines = len(lines)
-    line_change = new_total_lines - original_total_lines
-
-    # 📋 상세한 변화 정보 메시지 생성
-    base_msg = f"✅ Applied {applied_ops} operations successfully"
+    # 📁 파일 저장
+    path.write_text('\n'.join(lines) + '\n', encoding='utf-8')
     
-    if operation_details:
-        details_msg = "📝 Operations performed:\n" + "\n".join(f"  • {detail}" for detail in operation_details)
-    else:
-        details_msg = ""
-
+    # 📊 결과 리포트
+    new_total_lines = original_total_lines + line_change
+    
     if line_change == 0:
         change_msg = "✅ Line numbers unchanged"
     elif line_change > 0:
-        change_msg = f"📈 Added {line_change} lines total"
+        change_msg = f"📈 Added {line_change} lines"
     else:
-        change_msg = f"📉 Removed {abs(line_change)} lines total"
-
-    total_msg = f"📊 Total lines: {original_total_lines} → {new_total_lines}"
+        change_msg = f"📉 Removed {abs(line_change)} lines"
     
-    result_parts = [base_msg, details_msg, change_msg, total_msg]
-    return "\n".join(part for part in result_parts if part)
+    return f"✅ {detail}\n{change_msg}\n📊 Total lines: {original_total_lines} → {new_total_lines}"
 
 
 async def handle_smart_indent(arguments: Dict[str, Any]) -> str:

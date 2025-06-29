@@ -38,7 +38,7 @@ class ToolAdvisor:
                 "insert_line",           # Basic - single line insert
                 "replace_line_range",    # Advanced - multi-line replace  
                 "delete_lines",          # Advanced - multi-line delete
-                "patch_apply"            # Expert - batch operations
+                "patch_apply"            # Expert - safe individual operations
             ],
             "file_reading": [
                 "read_file",            # Basic - entire file
@@ -131,13 +131,13 @@ class ToolAdvisor:
             ),
             "patch_apply": ToolRecommendation(
                 tool_name="patch_apply",
-                priority=1,
-                use_cases=["Batch operations", "Complex multi-step edits", "Atomic transactions", "Script-like modifications"],
-                advantages=["Atomic operations", "No line number conflicts", "Maximum efficiency", "All-or-nothing safety"],
-                when_to_use="3+ operations, complex edits, or when line numbers might conflict",
-                avoid_when="Single simple operations",
-                performance_note="5-20x faster than sequential operations, prevents line number errors",
-                token_efficiency="Maximum efficiency - single atomic operation"
+                priority=2,
+                use_cases=["Single safe operations", "Precise line editing", "Complex replacements", "Multiline content"],
+                advantages=["No line conflicts", "Predictable results", "Safe editing", "Multiline support"],
+                when_to_use="Single operation needing safety, multiline content, or when avoiding conflicts is critical",
+                avoid_when="Multiple operations (use separate calls instead)",
+                performance_note="Safe and predictable - prevents line number conflicts completely",
+                token_efficiency="Good efficiency with complete safety guarantee"
             ),
 
             # FILE READING TOOLS
@@ -444,10 +444,15 @@ class ToolAdvisor:
         elif operation_type == "line_edit":
             line_count = kwargs.get("line_count", 1)
             operation_count = kwargs.get("operation_count", 1)
-            
+            needs_safety = kwargs.get("needs_safety", False)
+            multiline_content = kwargs.get("multiline_content", False)
+
             if operation_count >= 3:
                 recommendations.append("patch_apply")
-                reason = f"Multiple operations ({operation_count}) - atomic processing recommended"
+                reason = f"Multiple operations ({operation_count}) - use {operation_count} separate patch_apply calls for safety"
+            elif needs_safety or multiline_content:
+                recommendations.append("patch_apply")
+                reason = "Complex content or safety requirements - patch_apply provides conflict-free editing"
             elif line_count > 1:
                 recommendations.append("replace_line_range")
                 reason = f"Multi-line operation ({line_count} lines)"
