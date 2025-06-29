@@ -50,7 +50,7 @@
   },
   {
     "name": "create_directory",
-    "description": "[BASIC] Create a directory. Simple and reliable for single directory creation.",
+    "description": "[BASIC] Create a directory with automatic parent directory creation. Simple and reliable for single directory creation.",
     "inputSchema": {
       "type": "object",
       "properties": {
@@ -60,6 +60,24 @@
         }
       },
       "required": ["path"],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "create_directory_multiple",
+    "description": "[ADVANCED] Create multiple directories with automatic parent directory creation. Efficient for complex directory structures and project initialization.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "paths": {
+          "type": "array",
+          "description": "List of directory paths to create",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": ["paths"],
       "additionalProperties": false
     }
   },

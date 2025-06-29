@@ -39,7 +39,7 @@ async def handle_list_directory(arguments: Dict[str, Any]) -> str:
 
 
 async def handle_create_directory(arguments: Dict[str, Any]) -> str:
-    """디렉토리 생성 도구"""
+    """디렉토리 생성 도구 (부모 디렉토리도 자동 생성)"""
     path_str = arguments.get("path", "")
     if not path_str:
         raise ValueError("Path argument is required")
@@ -47,6 +47,39 @@ async def handle_create_directory(arguments: Dict[str, Any]) -> str:
     path = normalize_path(path_str)
     path.mkdir(parents=True, exist_ok=True)
     return f"Successfully created directory: {path}"
+
+async def handle_create_directory_multiple(arguments: Dict[str, Any]) -> str:
+    """다중 디렉토리 생성 도구 (부모 디렉토리도 자동 생성)"""
+    paths = arguments.get("paths", [])
+    if not paths:
+        raise ValueError("Paths argument is required")
+    
+    if not isinstance(paths, list):
+        raise ValueError("Paths must be a list of strings")
+    
+    created_dirs = []
+    errors = []
+    
+    for path_str in paths:
+        try:
+            if not path_str or not isinstance(path_str, str):
+                errors.append(f"Invalid path: {path_str}")
+                continue
+                
+            path = normalize_path(path_str)
+            path.mkdir(parents=True, exist_ok=True)
+            created_dirs.append(str(path))
+        except Exception as e:
+            errors.append(f"Failed to create {path_str}: {str(e)}")
+    
+    result = f"Successfully created {len(created_dirs)} directories"
+    if created_dirs:
+        result += ":\n" + "\n".join(f"• {dir}" for dir in created_dirs)
+    
+    if errors:
+        result += "\n\nErrors encountered:\n" + "\n".join(f"• {error}" for error in errors)
+    
+    return result
 
 
 async def handle_list_allowed_directories(arguments: Dict[str, Any]) -> str:

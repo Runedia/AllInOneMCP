@@ -55,6 +55,7 @@ class ToolAdvisor:
             "directory_operations": [
                 "list_directory",       # Basic - simple listing
                 "create_directory",     # Basic - single directory
+                "create_directory_multiple", # Advanced - multiple directories
                 "count_files",          # Advanced - file statistics
                 "get_directory_size",   # Advanced - size calculation
                 "get_recent_files",     # Advanced - recent changes
@@ -244,6 +245,16 @@ class ToolAdvisor:
                 avoid_when="Complex directory structures needed",
                 performance_note="Fast and reliable",
                 token_efficiency="Minimal token usage"
+            ),
+            "create_directory_multiple": ToolRecommendation(
+                tool_name="create_directory_multiple",
+                priority=2,
+                use_cases=["Multiple directory creation", "Complex directory structures", "Project initialization", "Batch folder setup"],
+                advantages=["Single operation for multiple paths", "Automatic parent creation", "Error handling per path", "Batch efficiency"],
+                when_to_use="Creating multiple directories or complex folder structures",
+                avoid_when="Only need single directory (use create_directory)",
+                performance_note="Much more efficient than multiple create_directory calls",
+                token_efficiency="High efficiency for batch operations"
             ),
             "count_files": ToolRecommendation(
                 tool_name="count_files",

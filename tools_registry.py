@@ -24,6 +24,7 @@ TOOL_HANDLERS = {
     # 디렉토리 관리
     "list_directory": handle_list_directory,
     "create_directory": handle_create_directory,
+    "create_directory_multiple": handle_create_directory_multiple,
     "list_allowed_directories": handle_list_allowed_directories,
     "count_files": handle_count_files,
     "get_directory_size": handle_get_directory_size,
@@ -76,7 +77,7 @@ TOOL_CATEGORIES = {
         "read_file", "write_file", "copy_file", "move_file", "delete_file", "backup_file"
     ],
     "directory": [
-        "list_directory", "create_directory", "list_allowed_directories",
+        "list_directory", "create_directory", "create_directory_multiple", "list_allowed_directories",
         "count_files", "get_directory_size", "get_recent_files", "analyze_project"
     ],
     "git": [
