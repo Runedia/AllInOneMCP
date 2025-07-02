@@ -4,7 +4,7 @@ Optimized for Windows console compatibility and AI readability
 """
 
 from typing import Dict, Any
-from tools.recommendations.tool_advisor import tool_advisor, get_performance_comparison
+from tools.tool_advisor import tool_advisor, get_performance_comparison
 
 
 async def handle_tool_guide(arguments: Dict[str, Any]) -> str:

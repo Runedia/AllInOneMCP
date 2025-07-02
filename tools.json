@@ -64,7 +64,7 @@
     }
   },
   {
-    "name": "create_directory_multiple",
+    "name": "create_directories",
     "description": "[ADVANCED] Create multiple directories with automatic parent directory creation. Efficient for complex directory structures and project initialization.",
     "inputSchema": {
       "type": "object",
