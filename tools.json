@@ -449,57 +449,6 @@
     }
   },
   {
-    "name": "find_and_replace",
-    "description": "[BASIC] Simple text replacement. Use regex_replace for patterns or multiple variants. [TIP] For complex operations, ask 'What's the best tool?' to get optimization via tool_guide.",
-    "inputSchema": {
-      "type": "object",
-      "properties": {
-        "path": {
-          "type": "string",
-          "description": "File path to modify"
-        },
-        "find": {
-          "type": "string",
-          "description": "Text to find"
-        },
-        "replace": {
-          "type": "string",
-          "description": "Text to replace with"
-        },
-        "count": {
-          "type": "integer",
-          "description": "Max replacements (0 = all)",
-          "default": 0
-        }
-      },
-      "required": ["path", "find", "replace"],
-      "additionalProperties": false
-    }
-  },
-  {
-    "name": "insert_line",
-    "description": "[BASIC] Insert single line. Use multiple patch_apply calls for complex edits or replace_line_range for multi-line changes. [WARNING] Consecutive inserts at same line number will appear in reverse order (LIFO). [TIP] For multiple operations, use separate patch_apply calls for safety.",
-    "inputSchema": {
-      "type": "object",
-      "properties": {
-        "path": {
-          "type": "string",
-          "description": "File path to modify"
-        },
-        "line_number": {
-          "type": "integer",
-          "description": "Line number to insert at (1-based)"
-        },
-        "content": {
-          "type": "string",
-          "description": "Content to insert"
-        }
-      },
-      "required": ["path", "line_number", "content"],
-      "additionalProperties": false
-    }
-  },
-  {
     "name": "append_to_file",
     "description": "[ADVANCED] Append content to end of file (very token efficient). Better than read+write for adding content.",
     "inputSchema": {
