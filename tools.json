@@ -885,5 +885,87 @@
       "required": ["paths"],
       "additionalProperties": false
     }
+  },
+  {
+    "name": "find_function",
+    "description": "[EXPERT] Find specific function using tree-sitter parser. Supports JavaScript, TypeScript, Python, Java, C/C++, C#, Rust, CSS, HTML, JSON, and more. Returns precise line numbers and signature.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "path": {
+          "type": "string",
+          "description": "File path to search in"
+        },
+        "function_name": {
+          "type": "string", 
+          "description": "Name of the function to find"
+        }
+      },
+      "required": ["path", "function_name"],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "list_functions",
+    "description": "[EXPERT] List all functions in a file using tree-sitter parser. Supports multiple languages including JSX and multiple languages. Shows function types, line numbers, and complexity.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "path": {
+          "type": "string",
+          "description": "File path to analyze"
+        },
+        "include_private": {
+          "type": "boolean",
+          "description": "Include private functions (starting with underscore)",
+          "default": true
+        }
+      },
+      "required": ["path"],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "extract_function",
+    "description": "[EXPERT] Extract complete function code using tree-sitter parser. Optionally includes preceding comments. Precise extraction with proper boundaries.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "path": {
+          "type": "string",
+          "description": "File path containing the function"
+        },
+        "function_name": {
+          "type": "string",
+          "description": "Name of the function to extract"
+        },
+        "include_comments": {
+          "type": "boolean",
+          "description": "Include preceding comments and documentation",
+          "default": true
+        }
+      },
+      "required": ["path", "function_name"],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "get_function_info",
+    "description": "[EXPERT] Get detailed function metadata using tree-sitter parser. Includes parameters, complexity score, signature, and preview. Advanced code analysis.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "path": {
+          "type": "string",
+          "description": "File path containing the function"
+        },
+        "function_name": {
+          "type": "string",
+          "description": "Name of the function to analyze"
+        }
+      },
+      "required": ["path", "function_name"],
+      "additionalProperties": false
+    }
   }
 ]

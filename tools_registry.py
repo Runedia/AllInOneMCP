@@ -10,6 +10,7 @@ from tools.tool_guide_handler import *
 from tools.directory_manager import *
 from tools.file_io import *
 from tools.file_search import *
+from tools.tree_sitter_analyzer import *
 
 # 도구 핸들러 매핑 - 기존 + 새로운 Git 도구들
 TOOL_HANDLERS = {
@@ -69,6 +70,12 @@ TOOL_HANDLERS = {
     # 🎯 도구 추천 시스템
     "tool_guide": handle_tool_guide,
     "tool_comparison": handle_tool_comparison,
+
+    # 🆕 Tree-sitter 기반 함수 분석 도구들
+    "find_function": handle_find_function,
+    "list_functions": handle_list_functions,
+    "extract_function": handle_extract_function,
+    "get_function_info": handle_get_function_info,
 }
 
 # 도구 카테고리별 분류
@@ -100,6 +107,9 @@ TOOL_CATEGORIES = {
     ],
     "guidance": [
         "tool_guide", "tool_comparison"
+    ],
+    "function_analysis": [
+        "find_function", "list_functions", "extract_function", "get_function_info"
     ]
 }
 

@@ -22,11 +22,11 @@ class ToolRecommendation:
 
 class ToolAdvisor:
     """Tool selection advisor with comprehensive recommendations"""
-    
+
     def __init__(self):
         self.tool_groups = self._initialize_tool_groups()
         self.recommendations = self._initialize_recommendations()
-    
+
     def _initialize_tool_groups(self) -> Dict[str, List[str]]:
         """Group tools by functionality"""
         return {
@@ -35,7 +35,7 @@ class ToolAdvisor:
             ],
             "line_editing": [
                 "insert_line",           # Basic - single line insert
-                "replace_line_range",    # Advanced - multi-line replace  
+                "replace_line_range",    # Advanced - multi-line replace
                 "delete_lines",          # Advanced - multi-line delete
                 "patch_apply"            # Expert - safe individual operations
             ],
@@ -71,9 +71,15 @@ class ToolAdvisor:
             "advanced_editing": [
                 "insert_at_position",   # Advanced - byte-level precision
                 "count_occurrences"     # Advanced - pattern search
+            ],
+            "function_analysis": [
+                "find_function",       # Expert - tree-sitter function search
+                "list_functions",      # Expert - complete function inventory
+                "extract_function",    # Expert - precise function extraction
+                "get_function_info"    # Expert - function metadata analysis
             ]
         }
-    
+
     def _initialize_recommendations(self) -> Dict[str, ToolRecommendation]:
         """Initialize comprehensive tool recommendations"""
         return {
@@ -350,81 +356,122 @@ class ToolAdvisor:
                 avoid_when="Need to replace found text (use regex_replace)",
                 performance_note="Much faster than manual search through content",
                 token_efficiency="Compact statistical output"
-            )
+            ),
+            # 🆕 FUNCTION ANALYSIS TOOLS (Tree-sitter based)
+            "find_function": ToolRecommendation(
+                tool_name="find_function",
+                priority=1,
+                use_cases=["Function location finding", "Exact line number detection", "Multi-language function search", "Code navigation"],
+                advantages=["Syntax-aware parsing", "Multi-language support", "Precise boundaries", "10x more accurate than regex"],
+                when_to_use="Need to locate specific function with exact line numbers across multiple languages",
+                avoid_when="Simple text search is sufficient",
+                performance_note="10x more accurate than regex - syntax-aware parsing with multi-language support",
+                token_efficiency="Single call provides precise location data eliminating manual parsing"
+            ),
+            "list_functions": ToolRecommendation(
+                tool_name="list_functions",
+                priority=1,
+                use_cases=["Function inventory", "Code refactoring analysis", "Project structure overview", "Function complexity mapping"],
+                advantages=["Complete function listing", "Type detection", "Complexity analysis", "Single file scan"],
+                when_to_use="Need comprehensive overview of all functions in a file for refactoring or analysis",
+                avoid_when="Only need to find one specific function",
+                performance_note="Parses entire file once to extract all functions - much faster than repeated searches",
+                token_efficiency="Replaces dozens of manual searches with structured data output"
+            ),
+            "extract_function": ToolRecommendation(
+                tool_name="extract_function",
+                priority=1,
+                use_cases=["Function code extraction", "Documentation generation", "Code review", "Function copying"],
+                advantages=["Perfect boundaries", "Comment inclusion", "Multi-language support", "Precise extraction"],
+                when_to_use="Need exact function code with perfect boundaries for copying or documentation",
+                avoid_when="Manual copy-paste from known line numbers is simpler",
+                performance_note="Guarantees correct function boundaries including optional comments",
+                token_efficiency="Precise extraction eliminates guesswork and manual line counting"
+            ),
+            "get_function_info": ToolRecommendation(
+                tool_name="get_function_info",
+                priority=1,
+                use_cases=["Function metadata analysis", "Parameter inspection", "Complexity assessment", "Code quality metrics"],
+                advantages=["Parameter analysis", "Complexity scoring", "Signature extraction", "Rich metadata"],
+                when_to_use="Need detailed function analysis including parameters, complexity, and metadata",
+                avoid_when="Simple function location is all that's needed",
+                performance_note="Advanced static analysis providing comprehensive function insights",
+                token_efficiency="Rich metadata in single call replacing multiple analysis steps"
+            ),
         }
-    
+
     def get_better_tool(self, current_tool: str, context: Optional[str] = None) -> Optional[str]:
         """Suggest better tool than current one"""
         for group_name, tools in self.tool_groups.items():
             if current_tool in tools:
                 # Find tools with higher priority (lower number)
                 current_priority = self.recommendations.get(current_tool, ToolRecommendation("", 999, [], [], "", "")).priority
-                
+
                 better_tools = []
                 for tool in tools:
                     if tool != current_tool:
                         tool_priority = self.recommendations.get(tool, ToolRecommendation("", 999, [], [], "", "")).priority
                         if tool_priority < current_priority:
                             better_tools.append((tool, tool_priority))
-                
+
                 if better_tools:
                     # Return highest priority tool
                     best_tool = min(better_tools, key=lambda x: x[1])
                     return best_tool[0]
-        
+
         return None
-    
+
     def get_recommendation_message(self, suggested_tool: str, current_tool: str) -> str:
         """Generate recommendation message"""
         suggestion = self.recommendations.get(suggested_tool)
         if not suggestion:
             return ""
-        
+
         msg = f"[TIP] **Better Tool Available**: Consider using `{suggested_tool}` instead of `{current_tool}`\\n"
         msg += f"[TARGET] **When to use**: {suggestion.when_to_use}\\n"
         msg += f"[GOOD FOR] **Advantages**: {', '.join(suggestion.advantages)}\\n"
-        
+
         if suggestion.performance_note:
             msg += f"[BEST] **Performance**: {suggestion.performance_note}\\n"
-        
+
         if suggestion.token_efficiency:
             msg += f"[TARGET] **Efficiency**: {suggestion.token_efficiency}\\n"
-        
+
         return msg
-    
+
     def get_tool_guide(self) -> str:
         """Generate comprehensive tool usage guide"""
         guide = "[TOOL SELECTION GUIDE] **Tool Selection Guide**\\n\\n"
-        
+
         for group_name, tools in self.tool_groups.items():
             guide += f"**{group_name.replace('_', ' ').title()}:**\\n"
-            
+
             # Sort by priority (lower number = higher priority)
             sorted_tools = sorted(tools, key=lambda t: self.recommendations.get(t, ToolRecommendation("", 999, [], [], "", "")).priority)
-            
+
             for tool in sorted_tools:
                 rec = self.recommendations.get(tool)
                 if rec:
                     priority_emoji = "[BEST]" if rec.priority == 1 else "[ADVANCED]" if rec.priority == 2 else "[BASIC]"
                     guide += f"  {priority_emoji} `{tool}`: {rec.when_to_use}"
-                    
+
                     if rec.performance_note:
                         guide += f" ({rec.performance_note})"
-                    
+
                     guide += "\\n"
-            
+
             guide += "\\n"
-        
+
         return guide
-    
+
     def get_performance_comparison(self, tool_category: str) -> str:
         """Get performance comparison for tool category"""
         if tool_category not in self.tool_groups:
             return "Category not found"
-        
+
         tools = self.tool_groups[tool_category]
         comparison = f"[BEST] **Performance Comparison - {tool_category.replace('_', ' ').title()}:**\\n\\n"
-        
+
         for tool in sorted(tools, key=lambda t: self.recommendations.get(t, ToolRecommendation("", 999, [], [], "", "")).priority):
             rec = self.recommendations.get(tool)
             if rec:
@@ -433,17 +480,17 @@ class ToolAdvisor:
                 comparison += f"   [PERFORMANCE] Performance: {rec.performance_note}\\n"
                 comparison += f"   [TARGET] Token Efficiency: {rec.token_efficiency}\\n"
                 comparison += f"   [GOOD FOR] Best for: {rec.when_to_use}\\n\\n"
-        
+
         return comparison
-    
+
     def analyze_operation(self, operation_type: str, **kwargs) -> str:
         """Analyze operation and recommend optimal tools"""
         recommendations = []
-        
+
         if operation_type == "text_replace":
             recommendations.append("regex_replace")
             reason = "Pattern-based text replacement recommended"
-        
+
         elif operation_type == "line_edit":
             line_count = kwargs.get("line_count", 1)
             operation_count = kwargs.get("operation_count", 1)
@@ -462,24 +509,24 @@ class ToolAdvisor:
             else:
                 recommendations.append("insert_line")
                 reason = "Single line operation"
-        
+
         elif operation_type == "file_read":
             file_size = kwargs.get("file_size", 0)
             need_full_content = kwargs.get("need_full_content", True)
-            
+
             if not need_full_content or file_size > 50000:  # 50KB threshold
                 recommendations.append("get_file_section")
                 reason = f"Large file ({file_size} bytes) or partial content needed"
             else:
                 recommendations.append("read_file")
                 reason = "Small file or full content required"
-        
+
         if recommendations:
             tool = recommendations[0]
             rec = self.recommendations.get(tool)
             if rec:
                 return f"[TARGET] **Recommended**: `{tool}` - {reason}\\n[TIP] {rec.when_to_use}"
-        
+
         return "No specific recommendation available"
 
 

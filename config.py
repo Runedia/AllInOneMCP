@@ -18,6 +18,5 @@ def normalize_path(path):
 ALLOWED_DIRECTORIES = [normalize_path(p) for p in RAW_ALLOWED_DIRECTORIES]
 
 # 서버 설정
-SERVER_VERSION = "20250629.3"
-SERVER_VERSION = "20250630.1"
+SERVER_VERSION = "20250703.1"
 SERVER_NAME = "nexus-fs"
