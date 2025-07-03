@@ -14,12 +14,13 @@ AVAILABLE_PARSERS = {}
 try:
     import tree_sitter
     from tree_sitter import Language, Parser
+
     print("tree-sitter 기본 패키지 로드 성공")
 
     # 언어별 파서 개별 import - 최신 API 방식
     parsers_to_load = [
         ('javascript', 'tree_sitter_javascript'),
-        ('python', 'tree_sitter_python'), 
+        ('python', 'tree_sitter_python'),
         ('typescript', 'tree_sitter_typescript'),
         ('java', 'tree_sitter_java'),
         ('cpp', 'tree_sitter_cpp'),
@@ -34,8 +35,15 @@ try:
     for lang_name, module_name in parsers_to_load:
         try:
             module = __import__(module_name)
-            # 최신 tree-sitter API: language 속성을 직접 사용
-            language_func = getattr(module, 'language', None)
+
+            # tree-sitter-typescript는 특별 API 사용
+            if lang_name == 'typescript':
+                # TypeScript은 .language_typescript() 함수 사용
+                language_func = getattr(module, 'language_typescript', None)
+            else:
+                # 다른 언어들은 .language 함수 사용
+                language_func = getattr(module, 'language', None)
+
             if language_func:
                 AVAILABLE_PARSERS[lang_name] = language_func
                 print(f"{lang_name} 파서 로드 성공")
@@ -45,7 +53,6 @@ try:
             print(f"{lang_name} 파서 로드 실패: {e}")
         except Exception as e:
             print(f"{lang_name} 파서 로드 중 오류: {e}")
-
     if AVAILABLE_PARSERS:
         TREE_SITTER_AVAILABLE = True
         print(f"총 {len(AVAILABLE_PARSERS)}/{len(parsers_to_load)} 파서 로드됨")
@@ -56,6 +63,8 @@ except ImportError as e:
     print(f"tree-sitter 기본 패키지 로드 실패: {e}")
 except Exception as e:
     print(f"tree-sitter 초기화 중 예상치 못한 오류: {e}")
+
+
 class TreeSitterAnalyzer:
     """다중 언어 tree-sitter 분석기 (0.24.0+ 전용)"""
 
@@ -74,7 +83,7 @@ class TreeSitterAnalyzer:
             try:
                 # 최신 tree-sitter API: language 함수를 직접 호출
                 language = Language(language_func())
-                
+
                 # 최신 API: Parser 생성자에 직접 언어 전달
                 parser = Parser(language)
 
@@ -165,6 +174,16 @@ class TreeSitterAnalyzer:
                 (function_item name: (identifier) @name) @function
                 (impl_item (function_item name: (identifier) @name)) @function
             ''',
+            'html': '''
+                (element (start_tag (tag_name) @name)) @element
+                (script_element) @script
+                (doctype) @doctype
+            ''',
+            'json': '''
+                (pair key: (string) @name) @property
+                (array) @array
+                (object) @object
+            ''',
         }
 
         return queries.get(language, '')
@@ -179,12 +198,14 @@ class TreeSitterAnalyzer:
         except:
             return content[node.start_byte:node.end_byte]
 
+
 # =============================================================================
 # MCP 도구 핸들러 함수들
 # =============================================================================
 
 # 전역 analyzer
 analyzer = None
+
 
 def get_analyzer():
     """analyzer 인스턴스를 안전하게 가져오기"""
@@ -203,6 +224,7 @@ def get_analyzer():
         except Exception as e:
             return None, f"TreeSitter initialization failed: {str(e)}"
     return analyzer, None
+
 
 async def handle_find_function(arguments: Dict[str, Any]) -> Dict[str, Any]:
     """특정 함수를 검색하고 위치 정보 반환"""
@@ -242,33 +264,168 @@ async def handle_find_function(arguments: Dict[str, Any]) -> Dict[str, Any]:
         captures = query.captures(tree.root_node)
 
         # tree-sitter 0.24.0의 딕셔너리 형식 처리
-        function_nodes = captures.get('function', [])
-        name_nodes = captures.get('name', [])
-
-        # 함수와 이름을 매칭하여 찾기
-        for func_node in function_nodes:
-            for name_node in name_nodes:
-                # 이름 노드가 함수 노드 내부에 있는지 확인
-                if (func_node.start_point <= name_node.start_point <= func_node.end_point):
-                    name_text = analyzer._get_node_text(name_node, content)
+        if language == 'html':
+            # HTML 전용 처리
+            element_nodes = captures.get('element', [])
+            name_nodes = captures.get('name', [])
+            script_nodes = captures.get('script', [])
+            doctype_nodes = captures.get('doctype', [])
+            
+            # HTML 요소 매칭
+            for element_node in element_nodes:
+                for name_node in name_nodes:
+                    if (element_node.start_point <= name_node.start_point <= element_node.end_point):
+                        name_text = analyzer._get_node_text(name_node, content)
+                        if name_text == function_name:
+                            start_line = element_node.start_point[0] + 1
+                            end_line = element_node.end_point[0] + 1
+                            element_text = analyzer._get_node_text(element_node, content)
+                            first_line = element_text.split('\n')[0].strip()
+                            
+                            return {
+                                "found": True,
+                                "function_name": function_name,
+                                "start_line": start_line,
+                                "end_line": end_line,
+                                "signature": first_line,
+                                "language": language,
+                                "file_path": path
+                            }
+            
+            # 스크립트 요소 매칭
+            for i, script_node in enumerate(script_nodes):
+                script_name = f"script_{i+1}"
+                if script_name == function_name:
+                    start_line = script_node.start_point[0] + 1
+                    end_line = script_node.end_point[0] + 1
+                    script_text = analyzer._get_node_text(script_node, content)
+                    first_line = script_text.split('\n')[0].strip()
                     
-                    if name_text == function_name:
-                        start_line = func_node.start_point[0] + 1
-                        end_line = func_node.end_point[0] + 1
+                    return {
+                        "found": True,
+                        "function_name": function_name,
+                        "start_line": start_line,
+                        "end_line": end_line,
+                        "signature": first_line,
+                        "language": language,
+                        "file_path": path
+                    }
+            
+            # DOCTYPE 매칭
+            for i, doctype_node in enumerate(doctype_nodes):
+                doctype_name = f"doctype_{i+1}"
+                if doctype_name == function_name:
+                    start_line = doctype_node.start_point[0] + 1
+                    end_line = doctype_node.end_point[0] + 1
+                    doctype_text = analyzer._get_node_text(doctype_node, content)
+                    
+                    return {
+                        "found": True,
+                        "function_name": function_name,
+                        "start_line": start_line,
+                        "end_line": end_line,
+                        "signature": doctype_text.strip(),
+                        "language": language,
+                        "file_path": path
+                    }
+        elif language == 'json':
+            # JSON 전용 처리
+            property_nodes = captures.get('property', [])
+            name_nodes = captures.get('name', [])
+            array_nodes = captures.get('array', [])
+            object_nodes = captures.get('object', [])
+            
+            # JSON 프로퍼티 매칭
+            for property_node in property_nodes:
+                for name_node in name_nodes:
+                    if (property_node.start_point <= name_node.start_point <= property_node.end_point):
+                        name_text = analyzer._get_node_text(name_node, content)
+                        # JSON 키에서 따옴표 제거
+                        if name_text.startswith('"') and name_text.endswith('"'):
+                            name_text = name_text[1:-1]
                         
-                        # 함수 시그니처 추출
-                        function_text = analyzer._get_node_text(func_node, content)
-                        first_line = function_text.split('\n')[0].strip()
-                        
-                        return {
-                            "found": True,
-                            "function_name": function_name,
-                            "start_line": start_line,
-                            "end_line": end_line,
-                            "signature": first_line,
-                            "language": language,
-                            "file_path": path
-                        }
+                        if name_text == function_name:
+                            start_line = property_node.start_point[0] + 1
+                            end_line = property_node.end_point[0] + 1
+                            property_text = analyzer._get_node_text(property_node, content)
+                            first_line = property_text.split('\n')[0].strip()
+                            
+                            return {
+                                "found": True,
+                                "function_name": function_name,
+                                "start_line": start_line,
+                                "end_line": end_line,
+                                "signature": first_line,
+                                "language": language,
+                                "file_path": path
+                            }
+            
+            # 배열 요소 매칭
+            for i, array_node in enumerate(array_nodes):
+                array_name = f"array_{i+1}"
+                if array_name == function_name:
+                    start_line = array_node.start_point[0] + 1
+                    end_line = array_node.end_point[0] + 1
+                    array_text = analyzer._get_node_text(array_node, content)
+                    first_line = array_text.split('\n')[0].strip()
+                    
+                    return {
+                        "found": True,
+                        "function_name": function_name,
+                        "start_line": start_line,
+                        "end_line": end_line,
+                        "signature": first_line,
+                        "language": language,
+                        "file_path": path
+                    }
+            
+            # 객체 요소 매칭
+            for i, object_node in enumerate(object_nodes):
+                object_name = f"object_{i+1}"
+                if object_name == function_name:
+                    start_line = object_node.start_point[0] + 1
+                    end_line = object_node.end_point[0] + 1
+                    object_text = analyzer._get_node_text(object_node, content)
+                    first_line = object_text.split('\n')[0].strip()
+                    
+                    return {
+                        "found": True,
+                        "function_name": function_name,
+                        "start_line": start_line,
+                        "end_line": end_line,
+                        "signature": first_line,
+                        "language": language,
+                        "file_path": path
+                    }
+        else:
+            # JavaScript/TypeScript 등 기존 처리
+            function_nodes = captures.get('function', [])
+            name_nodes = captures.get('name', [])
+
+            # 함수와 이름을 매칭하여 찾기
+            for func_node in function_nodes:
+                for name_node in name_nodes:
+                    # 이름 노드가 함수 노드 내부에 있는지 확인
+                    if (func_node.start_point <= name_node.start_point <= func_node.end_point):
+                        name_text = analyzer._get_node_text(name_node, content)
+
+                        if name_text == function_name:
+                            start_line = func_node.start_point[0] + 1
+                            end_line = func_node.end_point[0] + 1
+
+                            # 함수 시그니처 추출
+                            function_text = analyzer._get_node_text(func_node, content)
+                            first_line = function_text.split('\n')[0].strip()
+
+                            return {
+                                "found": True,
+                                "function_name": function_name,
+                                "start_line": start_line,
+                                "end_line": end_line,
+                                "signature": first_line,
+                                "language": language,
+                                "file_path": path
+                            }
 
         return {
             "found": False,
@@ -278,6 +435,7 @@ async def handle_find_function(arguments: Dict[str, Any]) -> Dict[str, Any]:
 
     except Exception as e:
         return {"error": f"Error occurred during function search: {str(e)}"}
+
 
 async def handle_list_functions(arguments: Dict[str, Any]) -> Dict[str, Any]:
     """파일의 모든 함수 목록 조회"""
@@ -320,47 +478,174 @@ async def handle_list_functions(arguments: Dict[str, Any]) -> Dict[str, Any]:
         processed_nodes = set()
 
         # tree-sitter 0.24.0의 딕셔너리 형식 처리
-        function_nodes = captures.get('function', [])
-        name_nodes = captures.get('name', [])
+        if language == 'html':
+            # HTML 전용 처리
+            element_nodes = captures.get('element', [])
+            name_nodes = captures.get('name', [])
+            script_nodes = captures.get('script', [])
+            doctype_nodes = captures.get('doctype', [])
+            
+            # HTML 요소들 처리
+            for element_node in element_nodes:
+                if id(element_node) not in processed_nodes:
+                    processed_nodes.add(id(element_node))
+                    
+                    # 요소 이름 찾기
+                    element_name = "element"
+                    for name_node in name_nodes:
+                        if (element_node.start_point <= name_node.start_point <= element_node.end_point):
+                            element_name = analyzer._get_node_text(name_node, content)
+                            break
+                    
+                    start_line = element_node.start_point[0] + 1
+                    end_line = element_node.end_point[0] + 1
+                    
+                    functions.append({
+                        "name": element_name,
+                        "type": "html_element",
+                        "start_line": start_line,
+                        "end_line": end_line,
+                        "line_count": end_line - start_line + 1
+                    })
+            
+            # 스크립트 요소들 처리
+            for i, script_node in enumerate(script_nodes):
+                if id(script_node) not in processed_nodes:
+                    processed_nodes.add(id(script_node))
+                    
+                    start_line = script_node.start_point[0] + 1
+                    end_line = script_node.end_point[0] + 1
+                    
+                    functions.append({
+                        "name": f"script_{i+1}",
+                        "type": "script_element",
+                        "start_line": start_line,
+                        "end_line": end_line,
+                        "line_count": end_line - start_line + 1
+                    })
+            
+            # DOCTYPE 요소들 처리
+            for i, doctype_node in enumerate(doctype_nodes):
+                if id(doctype_node) not in processed_nodes:
+                    processed_nodes.add(id(doctype_node))
+                    
+                    start_line = doctype_node.start_point[0] + 1
+                    end_line = doctype_node.end_point[0] + 1
+                    
+                    functions.append({
+                        "name": f"doctype_{i+1}",
+                        "type": "doctype",
+                        "start_line": start_line,
+                        "end_line": end_line,
+                        "line_count": end_line - start_line + 1
+                    })
+        elif language == 'json':
+            # JSON 전용 처리
+            property_nodes = captures.get('property', [])
+            name_nodes = captures.get('name', [])
+            array_nodes = captures.get('array', [])
+            object_nodes = captures.get('object', [])
+            
+            # JSON 프로퍼티들 처리
+            for property_node in property_nodes:
+                if id(property_node) not in processed_nodes:
+                    processed_nodes.add(id(property_node))
+                    
+                    # 프로퍼티 키 이름 찾기
+                    property_name = "property"
+                    for name_node in name_nodes:
+                        if (property_node.start_point <= name_node.start_point <= property_node.end_point):
+                            property_name = analyzer._get_node_text(name_node, content)
+                            # JSON 키에서 따옴표 제거
+                            if property_name.startswith('"') and property_name.endswith('"'):
+                                property_name = property_name[1:-1]
+                            break
+                    
+                    start_line = property_node.start_point[0] + 1
+                    end_line = property_node.end_point[0] + 1
+                    
+                    functions.append({
+                        "name": property_name,
+                        "type": "json_property",
+                        "start_line": start_line,
+                        "end_line": end_line,
+                        "line_count": end_line - start_line + 1
+                    })
+            
+            # JSON 배열들 처리
+            for i, array_node in enumerate(array_nodes):
+                if id(array_node) not in processed_nodes:
+                    processed_nodes.add(id(array_node))
+                    
+                    start_line = array_node.start_point[0] + 1
+                    end_line = array_node.end_point[0] + 1
+                    
+                    functions.append({
+                        "name": f"array_{i+1}",
+                        "type": "json_array",
+                        "start_line": start_line,
+                        "end_line": end_line,
+                        "line_count": end_line - start_line + 1
+                    })
+            
+            # JSON 객체들 처리
+            for i, object_node in enumerate(object_nodes):
+                if id(object_node) not in processed_nodes:
+                    processed_nodes.add(id(object_node))
+                    
+                    start_line = object_node.start_point[0] + 1
+                    end_line = object_node.end_point[0] + 1
+                    
+                    functions.append({
+                        "name": f"object_{i+1}",
+                        "type": "json_object",
+                        "start_line": start_line,
+                        "end_line": end_line,
+                        "line_count": end_line - start_line + 1
+                    })
+        else:
+            # JavaScript/TypeScript 등 기존 처리
+            function_nodes = captures.get('function', [])
+            name_nodes = captures.get('name', [])
 
-        for func_node in function_nodes:
-            if id(func_node) not in processed_nodes:
-                processed_nodes.add(id(func_node))
-                
-                # 함수 이름 찾기
-                function_name = "anonymous"
-                for name_node in name_nodes:
-                    # 이름 노드가 함수 노드 내부에 있는지 확인
-                    if (func_node.start_point <= name_node.start_point <= func_node.end_point):
-                        function_name = analyzer._get_node_text(name_node, content)
-                        break
-                
-                # private 함수 필터링 (언더스코어로 시작)
-                if not include_private and function_name.startswith('_'):
-                    continue
-                
-                start_line = func_node.start_point[0] + 1
-                end_line = func_node.end_point[0] + 1
-                
-                # 함수 타입 결정
-                node_type = func_node.type
-                function_type = "function"
-                if "arrow" in node_type:
-                    function_type = "arrow_function"
-                elif "method" in node_type:
-                    function_type = "method"
-                elif "async" in node_type:
-                    function_type = "async_function"
-                elif "variable_declarator" in node_type:
-                    function_type = "const_function"
-                
-                functions.append({
-                    "name": function_name,
-                    "type": function_type,
-                    "start_line": start_line,
-                    "end_line": end_line,
-                    "line_count": end_line - start_line + 1
-                })
+            for func_node in function_nodes:
+                if id(func_node) not in processed_nodes:
+                    processed_nodes.add(id(func_node))
+
+                    # 함수 이름 찾기
+                    function_name = "anonymous"
+                    for name_node in name_nodes:
+                        # 이름 노드가 함수 노드 내부에 있는지 확인
+                        if (func_node.start_point <= name_node.start_point <= func_node.end_point):
+                            function_name = analyzer._get_node_text(name_node, content)
+                            break
+
+                    # private 함수 필터링 (언더스코어로 시작)
+                    if not include_private and function_name.startswith('_'):
+                        continue
+
+                    start_line = func_node.start_point[0] + 1
+                    end_line = func_node.end_point[0] + 1
+
+                    # 함수 타입 결정
+                    node_type = func_node.type
+                    function_type = "function"
+                    if "arrow" in node_type:
+                        function_type = "arrow_function"
+                    elif "method" in node_type:
+                        function_type = "method"
+                    elif "async" in node_type:
+                        function_type = "async_function"
+                    elif "variable_declarator" in node_type:
+                        function_type = "const_function"
+
+                    functions.append({
+                        "name": function_name,
+                        "type": function_type,
+                        "start_line": start_line,
+                        "end_line": end_line,
+                        "line_count": end_line - start_line + 1
+                    })
 
         # 라인 번호로 정렬
         functions.sort(key=lambda x: x['start_line'])
@@ -375,6 +660,7 @@ async def handle_list_functions(arguments: Dict[str, Any]) -> Dict[str, Any]:
 
     except Exception as e:
         return {"error": f"Error occurred during function listing: {str(e)}"}
+
 
 async def handle_extract_function(arguments: Dict[str, Any]) -> Dict[str, Any]:
     """특정 함수의 전체 코드 추출"""
@@ -432,6 +718,7 @@ async def handle_extract_function(arguments: Dict[str, Any]) -> Dict[str, Any]:
 
     except Exception as e:
         return {"error": f"Error occurred during function extraction: {str(e)}"}
+
 
 async def handle_get_function_info(arguments: Dict[str, Any]) -> Dict[str, Any]:
     """함수의 상세 메타데이터 조회"""

@@ -1,7 +1,7 @@
 [
   {
     "name": "read_file",
-    "description": "[BASIC] Read entire file contents. Use get_file_section for specific parts or large files. [TIP] For token efficiency, use tool_guide to get reading optimization tips.",
+    "description": "[BASIC] Read entire file contents (memory intensive for >50KB files). For large files or specific sections, use get_file_section to save 70-90% tokens. Automatically detects file encoding.",
     "inputSchema": {
       "type": "object",
       "properties": {
@@ -16,7 +16,7 @@
   },
   {
     "name": "write_file",
-    "description": "[BASIC] Write content to file. Use append_to_file to add content or multiple patch_apply calls for complex edits.",
+    "description": "[BASIC] Write content to file, creating parent directories automatically. Always writes in UTF-8 encoding. For adding content to existing files, use append_to_file. For complex edits, use patch_apply calls.",
     "inputSchema": {
       "type": "object",
       "properties": {
@@ -35,7 +35,7 @@
   },
   {
     "name": "list_directory",
-    "description": "[BASIC] List directory contents. Use analyze_project for project overview or count_files for file statistics.",
+    "description": "[BASIC] List directory contents with file sizes and types. For project overviews, use analyze_project. For file counts by extension, use count_files. Returns sorted list with size information.",
     "inputSchema": {
       "type": "object",
       "properties": {
@@ -50,7 +50,7 @@
   },
   {
     "name": "create_directory",
-    "description": "[BASIC] Create a directory with automatic parent directory creation. Simple and reliable for single directory creation.",
+    "description": "[BASIC] Create single directory with automatic parent directory creation. For multiple directories at once, use create_directories for better efficiency.",
     "inputSchema": {
       "type": "object",
       "properties": {
@@ -65,7 +65,7 @@
   },
   {
     "name": "create_directories",
-    "description": "[ADVANCED] Create multiple directories with automatic parent directory creation. Efficient for complex directory structures and project initialization.",
+    "description": "[ADVANCED] Create multiple directories efficiently in batch operation with automatic parent creation. Ideal for complex project structures and initialization. Much faster than multiple create_directory calls.",
     "inputSchema": {
       "type": "object",
       "properties": {
@@ -83,7 +83,7 @@
   },
   {
     "name": "list_allowed_directories",
-    "description": "[ADVANCED] List all allowed directories. Essential for understanding server access permissions.",
+    "description": "[ADVANCED] List all accessible directories on the server. Essential for understanding server permissions and available paths. Use before attempting operations in new locations.",
     "inputSchema": {
       "type": "object",
       "properties": {},
@@ -93,7 +93,7 @@
   },
   {
     "name": "file_exists",
-    "description": "[EXPERT] Check if file/directory exists (very token efficient - returns Yes/No). Much faster than read attempts.",
+    "description": "[EXPERT] Ultra-fast existence check for files/directories (returns Yes/No only). Extremely token-efficient. Much faster than attempting read operations. Use for validation before operations.",
     "inputSchema": {
       "type": "object",
       "properties": {
@@ -107,8 +107,26 @@
     }
   },
   {
+    "name": "files_exist",
+    "description": "[EXPERT] Batch existence check for multiple files/directories (returns Yes/No/Error array). Up to 90% more efficient than multiple file_exists calls. Ideal for validating file lists.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "paths": {
+          "type": "array",
+          "description": "List of file/directory paths to check",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": ["paths"],
+      "additionalProperties": false
+    }
+  },
+  {
     "name": "count_files",
-    "description": "[ADVANCED] Count files by extension (token efficient summary). Better than manual counting via list_directory.",
+    "description": "[ADVANCED] Count files by extension with optional filtering. Returns statistics without loading file contents - highly token-efficient. Better than manual counting via list_directory.",
     "inputSchema": {
       "type": "object",
       "properties": {
@@ -118,7 +136,7 @@
         },
         "extension": {
           "type": "string",
-          "description": "File extension (optional)"
+          "description": "File extension to filter (optional, e.g., '.py', '.js')"
         }
       },
       "required": ["path"],
@@ -127,7 +145,7 @@
   },
   {
     "name": "get_directory_size",
-    "description": "[ADVANCED] Get total directory size (compact summary). Much more efficient than calculating manually.",
+    "description": "[ADVANCED] Calculate total directory size with readable format (bytes/KB/MB). Compact summary without listing files. Much more efficient than manual calculation.",
     "inputSchema": {
       "type": "object",
       "properties": {
@@ -142,7 +160,7 @@
   },
   {
     "name": "get_recent_files",
-    "description": "[ADVANCED] Get most recently modified files (small list). Perfect for finding latest changes efficiently.",
+    "description": "[ADVANCED] Get most recently modified files with timestamps. Perfect for finding latest changes efficiently. Returns sorted list by modification time - ideal for development workflows.",
     "inputSchema": {
       "type": "object",
       "properties": {
@@ -162,7 +180,7 @@
   },
   {
     "name": "analyze_project",
-    "description": "[EXPERT] Analyze project structure and file types (compact overview). Best for understanding large projects quickly.",
+    "description": "[EXPERT] Comprehensive project analysis: file types, structure, and statistics. Best for understanding large projects quickly. Returns compact overview with file counts by extension and directory structure.",
     "inputSchema": {
       "type": "object",
       "properties": {
@@ -177,7 +195,7 @@
   },
   {
     "name": "git_status",
-    "description": "[ADVANCED] Get detailed Git repository status. Shows modified, staged, and untracked files with comprehensive analysis.",
+    "description": "[ADVANCED] Get detailed Git repository status using GitPython. Shows modified, staged, untracked files with comprehensive analysis. More detailed than command-line git status.",
     "inputSchema": {
       "type": "object",
       "properties": {
@@ -192,7 +210,7 @@
   },
   {
     "name": "git_add",
-    "description": "[ADVANCED] Add files to Git staging area. Prepare files for the next commit.",
+    "description": "[ADVANCED] Add files to Git staging area using GitPython. Accepts multiple files and patterns. Prepares files for the next commit with detailed feedback on staged changes.",
     "inputSchema": {
       "type": "object",
       "properties": {
@@ -202,7 +220,7 @@
         },
         "files": {
           "type": "array",
-          "description": "List of file paths to add",
+          "description": "List of file paths to add (supports patterns like '*.py')",
           "items": {
             "type": "string"
           }
@@ -214,7 +232,7 @@
   },
   {
     "name": "git_commit",
-    "description": "[ADVANCED] Commit staged changes to Git repository. Creates a new commit with the specified message.",
+    "description": "[ADVANCED] Commit staged changes to Git repository with GitPython. Creates new commit with detailed message and returns commit hash. Validates staged changes before committing.",
     "inputSchema": {
       "type": "object",
       "properties": {
@@ -233,7 +251,7 @@
   },
   {
     "name": "git_push",
-    "description": "[ADVANCED] Push local branch to remote repository. Uploads commits to the remote server.",
+    "description": "[ADVANCED] Push local commits to remote repository using GitPython. Uploads commits to remote server with progress tracking and error handling. Supports custom remote and branch.",
     "inputSchema": {
       "type": "object",
       "properties": {
@@ -256,7 +274,7 @@
   },
   {
     "name": "git_pull",
-    "description": "[ADVANCED] Pull changes from remote repository and merge. Downloads and integrates remote changes.",
+    "description": "[ADVANCED] Pull and merge changes from remote repository using GitPython. Downloads and integrates remote changes with conflict detection and merge status reporting.",
     "inputSchema": {
       "type": "object",
       "properties": {
@@ -279,17 +297,17 @@
   },
   {
     "name": "git_clone",
-    "description": "[ADVANCED] Clone remote Git repository to local directory. Downloads entire repository from remote URL.",
+    "description": "[ADVANCED] Clone remote Git repository to local directory using GitPython. Downloads entire repository from remote URL with progress tracking and error handling.",
     "inputSchema": {
       "type": "object",
       "properties": {
         "url": {
           "type": "string",
-          "description": "Git repository URL to clone"
+          "description": "Git repository URL to clone (HTTPS or SSH)"
         },
         "path": {
           "type": "string",
-          "description": "Local path to clone to (optional)"
+          "description": "Local path to clone to (optional, uses repo name if not specified)"
         }
       },
       "required": ["url"],
@@ -298,7 +316,7 @@
   },
   {
     "name": "git_branch",
-    "description": "[ADVANCED] Manage Git branches (create, switch, list, delete). Complete branch management functionality.",
+    "description": "[ADVANCED] Complete Git branch management using GitPython: list, create, checkout, delete branches. Shows current branch, tracking info, and detailed branch status.",
     "inputSchema": {
       "type": "object",
       "properties": {
@@ -308,17 +326,17 @@
         },
         "action": {
           "type": "string",
-          "description": "Action to perform",
+          "description": "Action to perform: list (default), create, checkout, delete",
           "enum": ["list", "create", "checkout", "delete"],
           "default": "list"
         },
         "branch_name": {
           "type": "string",
-          "description": "Branch name (required for create/checkout/delete)"
+          "description": "Branch name (required for create/checkout/delete operations)"
         },
         "base_branch": {
           "type": "string",
-          "description": "Base branch for creation (optional)"
+          "description": "Base branch for creation (optional, defaults to current branch)"
         }
       },
       "required": [],
@@ -327,7 +345,7 @@
   },
   {
     "name": "git_log",
-    "description": "[ADVANCED] Show Git commit history. Displays commit information including hash, author, date, and message.",
+    "description": "[ADVANCED] Show Git commit history using GitPython. Displays commit hash, author, date, and message in readable format. More detailed than command-line git log.",
     "inputSchema": {
       "type": "object",
       "properties": {
@@ -347,7 +365,7 @@
   },
   {
     "name": "git_init",
-    "description": "[ADVANCED] Initialize new Git repository. Creates a new Git repository in the specified directory.",
+    "description": "[ADVANCED] Initialize new Git repository using GitPython. Creates .git directory and initial repository structure with confirmation of successful initialization.",
     "inputSchema": {
       "type": "object",
       "properties": {
@@ -362,7 +380,7 @@
   },
   {
     "name": "copy_file",
-    "description": "[ADVANCED] Copy a file (very token efficient - uses OS commands). Much faster than read+write combination.",
+    "description": "[ADVANCED] Copy file with metadata preservation using OS commands. Much faster and more token-efficient than read+write combination. Preserves timestamps and permissions.",
     "inputSchema": {
       "type": "object",
       "properties": {
@@ -381,7 +399,7 @@
   },
   {
     "name": "move_file",
-    "description": "[ADVANCED] Move or rename a file (token efficient). Single operation for move+rename tasks.",
+    "description": "[ADVANCED] Move or rename file using OS commands. Single atomic operation for move+rename tasks. More efficient than copy+delete combination.",
     "inputSchema": {
       "type": "object",
       "properties": {
@@ -400,17 +418,17 @@
   },
   {
     "name": "delete_file",
-    "description": "[ADVANCED] Delete a file (token efficient - simple confirmation). Use backup_file first for safety.",
+    "description": "[ADVANCED] Delete file or directory with safety confirmation. Use backup_file first for safety. Requires force=true for actual deletion, provides preview by default.",
     "inputSchema": {
       "type": "object",
       "properties": {
         "path": {
           "type": "string",
-          "description": "File path to delete"
+          "description": "File or directory path to delete"
         },
         "force": {
           "type": "boolean",
-          "description": "Skip confirmation",
+          "description": "Skip confirmation and delete immediately",
           "default": false
         }
       },
@@ -420,7 +438,7 @@
   },
   {
     "name": "backup_file",
-    "description": "[EXPERT] Create backup copy with timestamp (very token efficient). Essential before risky operations.",
+    "description": "[EXPERT] Create timestamped backup copy (format: filename.backup_YYYYMMDD_HHMMSS). Essential before risky operations. Extremely token-efficient with size reporting.",
     "inputSchema": {
       "type": "object",
       "properties": {
@@ -435,13 +453,13 @@
   },
   {
     "name": "file_info",
-    "description": "[EXPERT] Get file info without reading contents (very token efficient). Perfect for checking size, dates, permissions.",
+    "description": "[EXPERT] Get file metadata without reading contents (size, dates, permissions). Extremely token-efficient for checking file properties. Perfect for validation and analysis.",
     "inputSchema": {
       "type": "object",
       "properties": {
         "path": {
           "type": "string",
-          "description": "File path to check"
+          "description": "File path to examine"
         }
       },
       "required": ["path"],
@@ -450,7 +468,7 @@
   },
   {
     "name": "append_to_file",
-    "description": "[ADVANCED] Append content to end of file (very token efficient). Better than read+write for adding content.",
+    "description": "[ADVANCED] Append content to file end with line count tracking. Shows total line changes and tracks file growth. More efficient than read+modify+write for adding content.",
     "inputSchema": {
       "type": "object",
       "properties": {
@@ -460,7 +478,7 @@
         },
         "content": {
           "type": "string",
-          "description": "Content to append"
+          "description": "Content to append (newline added automatically)"
         }
       },
       "required": ["path", "content"],
@@ -469,7 +487,7 @@
   },
   {
     "name": "get_file_section",
-    "description": "[EXPERT] Get specific lines from file (token efficient reading). Much better than read_file for large files.",
+    "description": "[EXPERT] Read specific lines from large files with context. Saves 70-90% tokens vs read_file for large files. Shows line numbers and highlights target range. Memory-efficient streaming for huge files.",
     "inputSchema": {
       "type": "object",
       "properties": {
@@ -483,11 +501,11 @@
         },
         "end_line": {
           "type": "integer",
-          "description": "End line number (1-based, optional)"
+          "description": "End line number (1-based, optional, defaults to start_line)"
         },
         "context": {
           "type": "integer",
-          "description": "Extra context lines around",
+          "description": "Extra context lines around target range (default: 0)",
           "default": 0
         }
       },
@@ -497,7 +515,7 @@
   },
   {
     "name": "count_occurrences",
-    "description": "[ADVANCED] Count occurrences of text in file. More efficient than manual search through file content.",
+    "description": "[ADVANCED] Count text occurrences in file with case-sensitivity options. Reports total matches, matching lines, and file statistics. More efficient than manual search through file content.",
     "inputSchema": {
       "type": "object",
       "properties": {
@@ -511,7 +529,7 @@
         },
         "case_sensitive": {
           "type": "boolean",
-          "description": "Case sensitive search",
+          "description": "Case sensitive search (default: true)",
           "default": true
         }
       },
@@ -521,7 +539,7 @@
   },
   {
     "name": "replace_line_range",
-    "description": "[ADVANCED] Replace multiple lines efficiently. Better than multiple insert_line calls.",
+    "description": "[ADVANCED] Replace specific line range with new content efficiently. Tracks line number changes: shows original vs new line counts, which lines shift up/down. Memory-efficient streaming for large files.",
     "inputSchema": {
       "type": "object",
       "properties": {
@@ -535,11 +553,11 @@
         },
         "end_line": {
           "type": "integer",
-          "description": "End line number (1-based)"
+          "description": "End line number (1-based, inclusive)"
         },
         "content": {
           "type": "string",
-          "description": "New content to replace with"
+          "description": "New content to replace with (supports multiline)"
         }
       },
       "required": ["path", "start_line", "end_line", "content"],
@@ -548,7 +566,7 @@
   },
   {
     "name": "delete_lines",
-    "description": "[ADVANCED] Delete multiple lines efficiently with line tracking.",
+    "description": "[ADVANCED] Delete specific line range efficiently with line tracking. Reports which lines were deleted and how remaining lines shift up. Memory-efficient streaming for large files.",
     "inputSchema": {
       "type": "object",
       "properties": {
@@ -562,7 +580,7 @@
         },
         "end_line": {
           "type": "integer",
-          "description": "End line number (1-based, optional)"
+          "description": "End line number (1-based, optional, defaults to start_line)"
         }
       },
       "required": ["path", "start_line"],
@@ -571,7 +589,7 @@
   },
   {
     "name": "regex_replace",
-    "description": "[EXPERT] Pattern-based replacement with regex. Much more powerful than find_and_replace for complex patterns.",
+    "description": "[EXPERT] Advanced pattern-based replacement with regex support. Supports flags (i=ignorecase, m=multiline, s=dotall), capture groups ($1, $2), and replacement limits. Much more powerful than basic find_and_replace.",
     "inputSchema": {
       "type": "object",
       "properties": {
@@ -585,16 +603,16 @@
         },
         "replacement": {
           "type": "string",
-          "description": "Replacement text (can use $1, $2 for groups)"
+          "description": "Replacement text (supports capture groups: $1, $2, etc.)"
         },
         "flags": {
           "type": "string",
-          "description": "Regex flags (i=ignorecase, m=multiline, s=dotall)",
+          "description": "Regex flags: i=ignorecase, m=multiline, s=dotall (default: none)",
           "default": ""
         },
         "count": {
           "type": "integer",
-          "description": "Max replacements (0 = all)",
+          "description": "Maximum replacements to make (0 = unlimited, default: 0)",
           "default": 0
         }
       },
@@ -604,7 +622,7 @@
   },
   {
     "name": "insert_at_position",
-    "description": "[ADVANCED] Insert content at specific byte position. Use for binary files or precise positioning.",
+    "description": "[ADVANCED] Insert content at specific byte position in file. Useful for binary files or precise positioning. Use with caution on text files - line-based operations are usually better.",
     "inputSchema": {
       "type": "object",
       "properties": {
@@ -614,7 +632,7 @@
         },
         "position": {
           "type": "integer",
-          "description": "Byte position to insert at"
+          "description": "Byte position to insert at (0-based)"
         },
         "content": {
           "type": "string",
@@ -627,7 +645,7 @@
   },
   {
     "name": "smart_indent",
-    "description": "[EXPERT] Automatic indentation adjustment for code. Much faster than manual editing.",
+    "description": "[EXPERT] Automatic indentation adjustment for code blocks. Adds or removes indent levels efficiently. Supports tabs/spaces conversion. Perfect for code refactoring and formatting.",
     "inputSchema": {
       "type": "object",
       "properties": {
@@ -649,7 +667,7 @@
         },
         "use_tabs": {
           "type": "boolean",
-          "description": "Use tabs instead of spaces",
+          "description": "Use tabs instead of spaces (default: false)",
           "default": false
         }
       },
@@ -659,7 +677,7 @@
   },
   {
     "name": "patch_apply",
-    "description": "[EXPERT] Apply single edit operation safely. Prevents line number conflicts by processing one operation at a time. For multiple edits, use separate patch_apply calls. Supports multiline content and detailed operation tracking.",
+    "description": "[EXPERT] Apply single precise edit operation safely. Prevents line number conflicts by processing one operation at a time. Supports multiline content with detailed operation tracking. For multiple edits, use separate calls to maintain line number accuracy.",
     "inputSchema": {
       "type": "object",
       "properties": {
@@ -701,62 +719,8 @@
     }
   },
   {
-    "name": "tool_guide",
-    "description": "[ESSENTIAL] Get smart tool recommendations and usage guide for optimal efficiency. Use this when unsure which tool is best for your task or when planning complex operations!",
-    "inputSchema": {
-      "type": "object",
-      "properties": {
-        "operation_type": {
-          "type": "string",
-          "description": "Type of operation: text_replace, line_edit, file_read, file_operations, directory_operations, code_format, performance, general",
-          "enum": [
-            "text_replace",
-            "line_edit",
-            "file_read",
-            "file_operations",
-            "directory_operations",
-            "code_format",
-            "performance",
-            "general"
-          ]
-        },
-        "show_full_guide": {
-          "type": "boolean",
-          "description": "Show complete tool selection guide",
-          "default": false
-        },
-        "show_performance": {
-          "type": "boolean",
-          "description": "Show detailed performance metrics and efficiency comparisons",
-          "default": false
-        }
-      },
-      "required": [],
-      "additionalProperties": false
-    }
-  },
-  {
-    "name": "tool_comparison",
-    "description": "[ADVANCED] Compare two specific tools directly with detailed performance and efficiency analysis",
-    "inputSchema": {
-      "type": "object",
-      "properties": {
-        "tool1": {
-          "type": "string",
-          "description": "First tool to compare"
-        },
-        "tool2": {
-          "type": "string",
-          "description": "Second tool to compare"
-        }
-      },
-      "required": ["tool1", "tool2"],
-      "additionalProperties": false
-    }
-  },
-  {
     "name": "search_in_file",
-    "description": "[ADVANCED] Search for text within a single file. Windows findstr-like functionality with line numbers, context, and regex support.",
+    "description": "[ADVANCED] Search for text within single file with context and highlighting. Windows findstr-like functionality with line numbers, regex support, and case options. Shows surrounding context lines.",
     "inputSchema": {
       "type": "object",
       "properties": {
@@ -766,7 +730,7 @@
         },
         "search_text": {
           "type": "string",
-          "description": "Text to search for"
+          "description": "Text or pattern to search for"
         },
         "case_sensitive": {
           "type": "boolean",
@@ -795,7 +759,7 @@
   },
   {
     "name": "search_in_directory",
-    "description": "[ADVANCED] Search for text in multiple files within a directory. Supports file extension filtering and performance limits.",
+    "description": "[ADVANCED] Search for text across multiple files in directory with extension filtering. Supports regex patterns and performance limits. Perfect for project-wide searches with detailed match reporting.",
     "inputSchema": {
       "type": "object",
       "properties": {
@@ -805,7 +769,7 @@
         },
         "search_text": {
           "type": "string",
-          "description": "Text to search for"
+          "description": "Text or pattern to search for"
         },
         "file_extensions": {
           "type": "array",
@@ -841,7 +805,7 @@
   },
   {
     "name": "regex_search",
-    "description": "[EXPERT] Advanced regular expression search with capture groups and detailed pattern matching. Much more powerful than basic text search.",
+    "description": "[EXPERT] Advanced regex search with capture groups and detailed pattern matching. Returns capture groups, match positions, and full pattern details. Much more powerful than basic text search.",
     "inputSchema": {
       "type": "object",
       "properties": {
@@ -855,7 +819,7 @@
         },
         "flags": {
           "type": "string",
-          "description": "Regex flags (i=ignorecase, m=multiline, s=dotall)",
+          "description": "Regex flags: i=ignorecase, m=multiline, s=dotall (default: none)",
           "default": ""
         },
         "capture_groups": {
@@ -870,7 +834,7 @@
   },
   {
     "name": "backup_files",
-    "description": "[EXPERT] Create multiple backup copies with consistent timestamp (very token efficient). Essential for batch backup operations before risky changes.",
+    "description": "[EXPERT] Create multiple backup copies with consistent timestamp for batch operations. All files get same timestamp for backup set consistency. Essential before risky batch changes - highly token-efficient.",
     "inputSchema": {
       "type": "object",
       "properties": {
@@ -888,7 +852,7 @@
   },
   {
     "name": "find_function",
-    "description": "[EXPERT] Find specific function using tree-sitter parser. Supports JavaScript, TypeScript, Python, Java, C/C++, C#, Rust, CSS, HTML, JSON, and more. Returns precise line numbers and signature.",
+    "description": "[EXPERT] Find specific function using tree-sitter parser. Supports: JavaScript, TypeScript, Python, Java, C/C++, C#, Rust, Go, CSS, HTML, JSON, JSX, and more. Returns precise line numbers and function signature.",
     "inputSchema": {
       "type": "object",
       "properties": {
@@ -898,7 +862,7 @@
         },
         "function_name": {
           "type": "string", 
-          "description": "Name of the function to find"
+          "description": "Name of the function to find (exact match)"
         }
       },
       "required": ["path", "function_name"],
@@ -907,7 +871,7 @@
   },
   {
     "name": "list_functions",
-    "description": "[EXPERT] List all functions in a file using tree-sitter parser. Supports multiple languages including JSX and multiple languages. Shows function types, line numbers, and complexity.",
+    "description": "[EXPERT] List all functions in file using tree-sitter parser. Supports: JavaScript, TypeScript, Python, Java, C/C++, C#, Rust, Go, CSS, HTML, JSON, JSX. Shows function types, line numbers, and complexity metrics.",
     "inputSchema": {
       "type": "object",
       "properties": {
@@ -927,7 +891,7 @@
   },
   {
     "name": "extract_function",
-    "description": "[EXPERT] Extract complete function code using tree-sitter parser. Optionally includes preceding comments. Precise extraction with proper boundaries.",
+    "description": "[EXPERT] Extract complete function code using tree-sitter parser. Includes preceding comments and documentation by default. Precise extraction with proper boundaries - perfect for code analysis and refactoring.",
     "inputSchema": {
       "type": "object",
       "properties": {
@@ -951,7 +915,7 @@
   },
   {
     "name": "get_function_info",
-    "description": "[EXPERT] Get detailed function metadata using tree-sitter parser. Includes parameters, complexity score, signature, and preview. Advanced code analysis.",
+    "description": "[EXPERT] Get detailed function metadata using tree-sitter parser. Includes parameters, complexity score, signature, and code preview. Advanced code analysis for refactoring and documentation.",
     "inputSchema": {
       "type": "object",
       "properties": {

@@ -6,7 +6,6 @@ from tools.git_tools import *
 from tools.text_processor import *
 from tools.file_metadata import *
 from tools.advanced_text_processor import *
-from tools.tool_guide_handler import *
 from tools.directory_manager import *
 from tools.file_io import *
 from tools.file_search import *
@@ -52,6 +51,7 @@ TOOL_HANDLERS = {
 
     # 파일 메타데이터
     "file_exists": handle_file_exists,
+    "files_exist": handle_files_exist,
     "file_info": handle_file_info,
 
     # 🆕 고급 편집 도구들
@@ -67,9 +67,6 @@ TOOL_HANDLERS = {
     "search_in_directory": handle_search_in_directory,
     "regex_search": handle_regex_search,
 
-    # 🎯 도구 추천 시스템
-    "tool_guide": handle_tool_guide,
-    "tool_comparison": handle_tool_comparison,
 
     # 🆕 Tree-sitter 기반 함수 분석 도구들
     "find_function": handle_find_function,
@@ -100,13 +97,11 @@ TOOL_CATEGORIES = {
         "insert_at_position", "patch_apply", "smart_indent"
     ],
     "metadata": [
+        "file_exists", "files_exist", "file_info"
         "file_exists", "file_info"
     ],
     "search": [
         "search_in_file", "search_in_directory", "regex_search"
-    ],
-    "guidance": [
-        "tool_guide", "tool_comparison"
     ],
     "function_analysis": [
         "find_function", "list_functions", "extract_function", "get_function_info"

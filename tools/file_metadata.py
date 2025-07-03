@@ -30,3 +30,26 @@ async def handle_file_info(arguments: Dict[str, Any]) -> str:
     modified = datetime.fromtimestamp(stat.st_mtime).strftime("%m-%d %H:%M")
 
     return f"{path.name}: {file_type}, {size_kb:.1f}KB, modified {modified}"
+
+
+async def handle_files_exist(arguments: Dict[str, Any]) -> str:
+    """다중 파일 존재 확인 도구"""
+    paths = arguments.get("paths", [])
+    if not paths:
+        raise ValueError("paths argument is required")
+
+    if not isinstance(paths, list):
+        raise ValueError("paths must be a list of file paths")
+
+    results = []
+    for path_str in paths:
+        try:
+            path = normalize_path(path_str)
+            if path.exists():
+                results.append("Yes")
+            else:
+                results.append("No")
+        except Exception:
+            results.append("Error")
+
+    return str(results)
