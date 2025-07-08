@@ -44,7 +44,6 @@ TOOL_HANDLERS = {
     "git_init": handle_git_init,
 
     # 기본 텍스트 처리
-    "insert_line": handle_insert_line,
     "append_to_file": handle_append_to_file,
     "get_file_section": handle_get_file_section,
     "count_occurrences": handle_count_occurrences,

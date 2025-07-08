@@ -16,15 +16,6 @@ except ImportError:
     chardet = None
     print("[DEBUG] chardet not available", file=sys.stderr)
 
-if os.name == 'nt':
-    try:
-        import win32_stat
-
-        print("[DEBUG] win32_stat imported successfully", file=sys.stderr)
-    except ImportError:
-        win32_stat = None
-        print("[DEBUG] win32_stat not available", file=sys.stderr)
-
 # 설정 import
 try:
     from config import ALLOWED_DIRECTORIES

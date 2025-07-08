@@ -46,7 +46,7 @@ try:
 
             if language_func:
                 AVAILABLE_PARSERS[lang_name] = language_func
-                print(f"{lang_name} 파서 로드 성공")
+                # print(f"{lang_name} 파서 로드 성공")
             else:
                 print(f"{lang_name} 파서에서 language 함수를 찾을 수 없음")
         except ImportError as e:
@@ -55,7 +55,7 @@ try:
             print(f"{lang_name} 파서 로드 중 오류: {e}")
     if AVAILABLE_PARSERS:
         TREE_SITTER_AVAILABLE = True
-        print(f"총 {len(AVAILABLE_PARSERS)}/{len(parsers_to_load)} 파서 로드됨")
+        # print(f"총 {len(AVAILABLE_PARSERS)}/{len(parsers_to_load)} 파서 로드됨")
     else:
         print("사용 가능한 tree-sitter 파서가 없습니다")
 
