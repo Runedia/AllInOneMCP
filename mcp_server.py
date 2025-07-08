@@ -9,6 +9,9 @@ import os
 from typing import List, Dict, Any, Sequence
 import config
 
+# 공통 유틸리티 함수 import 추가
+from tools.utils import load_tools_json
+
 try:
     from mcp.server import Server
     from mcp.server.models import InitializationOptions
@@ -58,7 +61,7 @@ def create_mcp_server():
                         text_result = json.dumps(result, ensure_ascii=False, indent=2)
                 else:
                     text_result = str(result)
-                
+
                 return [types.TextContent(type="text", text=text_result)]
             else:
                 raise ValueError(f"Unknown tool: {name}")
@@ -74,13 +77,12 @@ def create_mcp_server():
 def get_tool_definitions() -> List[types.Tool]:
     """JSON 파일에서 도구 정의를 로드하여 types.Tool 객체로 변환"""
     try:
-        # 현재 스크립트와 같은 디렉토리의 tools.json 파일 경로
-        current_dir = os.path.dirname(os.path.abspath(__file__))
-        tools_json_path = os.path.join(current_dir, 'tools.json')
+        # 공통 유틸리티 함수를 사용하여 tools.json 로드
+        tools_data = load_tools_json()
 
-        # JSON 파일 읽기
-        with open(tools_json_path, 'r', encoding='utf-8') as f:
-            tools_data = json.load(f)
+        if not tools_data:
+            print("[WARNING] No tools loaded from tools.json", file=sys.stderr)
+            return []
 
         # JSON 데이터를 types.Tool 객체로 변환
         tools = []
@@ -95,14 +97,8 @@ def get_tool_definitions() -> List[types.Tool]:
         print(f"[DEBUG] Loaded {len(tools)} tools from tools.json", file=sys.stderr)
         return tools
 
-    except FileNotFoundError:
-        print(f"[ERROR] tools.json file not found at {tools_json_path}", file=sys.stderr)
-        return []
-    except json.JSONDecodeError as e:
-        print(f"[ERROR] Invalid JSON in tools.json: {e}", file=sys.stderr)
-        return []
     except Exception as e:
-        print(f"[ERROR] Error loading tools from JSON: {e}", file=sys.stderr)
+        print(f"[ERROR] Error converting tools to MCP format: {e}", file=sys.stderr)
         return []
 
 

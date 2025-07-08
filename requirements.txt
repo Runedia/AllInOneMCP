@@ -30,3 +30,6 @@ tree-sitter-rust>=0.21.0
 tree-sitter-css>=0.21.0
 tree-sitter-html>=0.21.0
 tree-sitter-json>=0.21.0
+
+# 파일 인코딩 감지
+chardet
